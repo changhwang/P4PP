@@ -95,6 +95,18 @@ Implement a PoC system to measure **Sheet Resistance (Rs, Ω/□)** of ITO and t
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 1.4 Module Descriptions
+
+| Module | Function | Key Parts |
+|:---:|---|---|
+| **MCU** | Controls system, communicates with PC, collects ADC data. | Arduino Nano 33 IoT |
+| **ADS1220** | High-precision voltage measurement (24-bit) for resistance calc. | ADS1220 (TI) |
+| **Input Protection** | Protects sensitive ADC from overvoltage and ESD. | BAT54S (Diode), 1kΩ |
+| **LM334 Current Src** | Injects constant current (1mA/100µA) for measurement. | LM334, Rset, Shunt |
+| **DPDT Relay** | Physically reverses current flow to cancel Thermal EMF. | Panasonic TQ2-12V |
+| **Relay Driver** | Drives 12V relay using 3.3V logic signal from Arduino. | PN2222A (Transistor) |
+| **Power Filter** | Filters power noise to improve measurement precision. | 10Ω, 1µF, 0.1µF |
+
 ---
 
 ## 2. Key Design Principles

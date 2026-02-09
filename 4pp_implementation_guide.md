@@ -95,6 +95,18 @@ Signatone SP4-40085TFJ 4-point probe 헤드를 사용하여 ITO 및 박막의 **
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 1.4 주요 모듈 역할 요약 (Module Descriptions)
+
+| 모듈(Module) | 역할 (Function) | 핵심 부품 (Key Parts) |
+|:---:|---|---|
+| **MCU** | 전체 시스템 제어, PC와 통신, ADC 데이터 수집 | Arduino Nano 33 IoT |
+| **ADS1220** | 정밀 전압 측정 (24-bit). 미세한 전압 차이를 읽어 저항 계산 | ADS1220 (TI) |
+| **Input Protection** | 과전압/정전기(ESD)로부터 민감한 ADC를 보호 | BAT54S (Diode), 1kΩ |
+| **LM334 Current Src** | 일정한 전류(1mA/100µA)를 흘려보내 측정을 가능하게 함 | LM334, Rset, Shunt |
+| **DPDT Relay** | 전류의 방향을 물리적으로 뒤집어(반전) 열기전력 오차 제거 | Panasonic TQ2-12V |
+| **Relay Driver** | 아두이노(3.3V) 신호로 12V 릴레이를 힘차게 구동 | PN2222A (Transistor) |
+| **Power Filter** | 전원 노이즈를 걸러내어 측정 정밀도 향상 (Clean 3.3V) | 10Ω, 1µF, 0.1µF |
+
 ---
 
 ## 2. 핵심 설계 원칙
