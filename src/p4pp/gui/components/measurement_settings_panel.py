@@ -86,9 +86,32 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
             font=ctk.CTkFont(size=14, weight="bold"),
         ).grid(row=0, column=0, padx=20, pady=(12, 8))
 
+        # --- Current source resistor ---
+        res_frame = ctk.CTkFrame(self, fg_color="transparent")
+        res_frame.grid(row=1, column=0, padx=20, pady=4, sticky="ew")
+        res_frame.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(res_frame, text="R_set:").grid(row=0, column=0, sticky="w")
+        self.resistor_var = ctk.StringVar(value="68.1 Ω")
+        self.combo_resistor = ctk.CTkComboBox(
+            res_frame,
+            values=["68.1 Ω", "681 Ω"],
+            variable=self.resistor_var,
+            command=self._on_resistor_changed,
+            state="readonly",
+            width=100,
+        )
+        self.combo_resistor.grid(row=0, column=1, sticky="e")
+        self.lbl_range = ctk.CTkLabel(
+            self,
+            text="Range: ~0.1 – 2000 Ω/sq  (I ≈ 1 mA)",
+            font=ctk.CTkFont(size=11),
+            text_color="#9CB5D9",
+        )
+        self.lbl_range.grid(row=2, column=0, padx=20, pady=(0, 4), sticky="w")
+
         # --- Cycle count ---
         cyc_frame = ctk.CTkFrame(self, fg_color="transparent")
-        cyc_frame.grid(row=1, column=0, padx=20, pady=4, sticky="ew")
+        cyc_frame.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
         cyc_frame.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(cyc_frame, text="Cycles:").grid(row=0, column=0, sticky="w")
         self.cycles_var = ctk.StringVar(value="5")
@@ -97,7 +120,7 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
 
         # --- Shape selection ---
         shape_frame = ctk.CTkFrame(self, fg_color="transparent")
-        shape_frame.grid(row=2, column=0, padx=20, pady=4, sticky="ew")
+        shape_frame.grid(row=4, column=0, padx=20, pady=4, sticky="ew")
         shape_frame.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(shape_frame, text="Shape:").grid(row=0, column=0, sticky="w")
         self.shape_var = ctk.StringVar(value="Infinite Sheet")
@@ -112,7 +135,7 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
 
         # --- Probe spacing ---
         spacing_frame = ctk.CTkFrame(self, fg_color="transparent")
-        spacing_frame.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
+        spacing_frame.grid(row=5, column=0, padx=20, pady=4, sticky="ew")
         spacing_frame.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(spacing_frame, text="Probe spacing (mm):").grid(row=0, column=0, sticky="w")
         self.spacing_var = ctk.StringVar(value=str(self.PROBE_SPACING_DEFAULT))
@@ -123,7 +146,7 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
 
         # --- Dimension inputs (hidden by default) ---
         self.dim_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.dim_frame.grid(row=4, column=0, padx=20, pady=4, sticky="ew")
+        self.dim_frame.grid(row=6, column=0, padx=20, pady=4, sticky="ew")
         self.dim_frame.grid_columnconfigure(1, weight=1)
 
         self.lbl_dim1 = ctk.CTkLabel(self.dim_frame, text="Diameter (mm):")
@@ -145,7 +168,7 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
             font=ctk.CTkFont(size=12),
             text_color="#9CB5D9",
         )
-        self.lbl_factor.grid(row=5, column=0, padx=20, pady=(4, 12), sticky="w")
+        self.lbl_factor.grid(row=7, column=0, padx=20, pady=(4, 12), sticky="w")
 
         # Initial state
         self._on_shape_changed("Infinite Sheet")
@@ -189,6 +212,21 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
             return max(1, min(val, 20))
         except ValueError:
             return 5
+
+    def _on_resistor_changed(self, choice: str):
+        if "68.1" in choice:
+            self.lbl_range.configure(text="Range: ~0.1 – 2000 Ω/sq  (I ≈ 1 mA)")
+        else:
+            self.lbl_range.configure(text="Range: ~10 – 20000 Ω/sq  (I ≈ 0.1 mA)")
+        if self.on_settings_changed:
+            self.on_settings_changed()
+
+    def get_resistor_info(self) -> dict:
+        val = self.resistor_var.get()
+        if "68.1" in val:
+            return {"R_set": 68.1, "label": "68.1 Ω", "range": "0.1-2000 Ω/sq"}
+        else:
+            return {"R_set": 681, "label": "681 Ω", "range": "10-20000 Ω/sq"}
 
     def get_correction_factor(self) -> float:
         shape = self.shape_var.get()

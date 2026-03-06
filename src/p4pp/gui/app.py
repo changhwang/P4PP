@@ -196,9 +196,12 @@ class P4PPApp(ctk.CTk):
         if self.controller:
             self.controller.home_linear()
 
+    ROT_SAFETY_LIN_MM = 45.0  # Block rotation if linear position >= this
+
     def cmd_home_rot(self):
         if self.controller:
-            self.controller.home_rotational()
+            if self._check_rotation_safe():
+                self.controller.home_rotational()
 
     def cmd_move_lin_abs(self, mm_target: float):
         if self.controller:
@@ -212,13 +215,27 @@ class P4PPApp(ctk.CTk):
 
     def cmd_move_rot_abs(self, deg_target: float):
         if self.controller:
-            steps = self.controller.deg_to_rot_steps(deg_target)
-            self.controller.move_rotational(steps, relative=False)
+            if self._check_rotation_safe():
+                steps = self.controller.deg_to_rot_steps(deg_target)
+                self.controller.move_rotational(steps, relative=False)
 
     def cmd_move_rot_rel(self, delta_deg: float, direction: int):
         if self.controller:
-            steps = self.controller.deg_to_rot_steps(abs(delta_deg)) * (1 if direction >= 0 else -1)
-            self.controller.move_rotational(steps, relative=True)
+            if self._check_rotation_safe():
+                steps = self.controller.deg_to_rot_steps(abs(delta_deg)) * (1 if direction >= 0 else -1)
+                self.controller.move_rotational(steps, relative=True)
+
+    def _check_rotation_safe(self) -> bool:
+        if not self.controller:
+            return False
+        lin_mm = P4PPController.lin_steps_to_mm(self.controller.pos_lin)
+        if lin_mm >= self.ROT_SAFETY_LIN_MM:
+            logger.warning("Rotation blocked: LIN=%.1fmm >= %.1fmm safety limit", lin_mm, self.ROT_SAFETY_LIN_MM)
+            self.serial_log_panel.append_lines(
+                [f"[SAFETY] Rotation blocked! LIN={lin_mm:.1f}mm >= {self.ROT_SAFETY_LIN_MM:.0f}mm. Retract probe first."]
+            )
+            return False
+        return True
 
     # -----------------------------------------------------------------
     # Port helpers
@@ -321,6 +338,7 @@ class P4PPApp(ctk.CTk):
         shape = self.meas_settings.shape_var.get()
         spacing = self.meas_settings.spacing_var.get()
         corr_factor = self.meas_settings.get_correction_factor()
+        resistor_info = self.meas_settings.get_resistor_info()
 
         dim_info = ""
         if shape == "Circular":
@@ -344,6 +362,8 @@ class P4PPApp(ctk.CTk):
 
             # -- Settings --
             w.writerow(["Measurement Settings"])
+            w.writerow(["Current Source R_set", resistor_info["label"]])
+            w.writerow(["Measurement Range", resistor_info["range"]])
             w.writerow(["Cycles (N)", cycles])
             w.writerow(["Probe Spacing (mm)", spacing])
             w.writerow(["Sample Shape", shape])
