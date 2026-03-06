@@ -399,6 +399,9 @@ class P4PPApp(ctk.CTk):
         logger.info("Measurement saved: %s", filepath)
 
 
-if __name__ == "__main__":
+def main():
     app = P4PPApp()
     app.mainloop()
+
+if __name__ == "__main__":
+    main()
