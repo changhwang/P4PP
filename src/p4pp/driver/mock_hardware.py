@@ -93,8 +93,11 @@ class MockHardware:
         if cmd.startswith(Command.MOVE_LIN):
             try:
                 target = int(cmd.split(" ", 1)[1])
+                dist = abs(target - self.pos_lin)
+                move_time = max(0.5, min(dist / 5000.0, 2.0))  # 0.5-2s
                 self.pos_lin = target
-                self._queue_delayed_response(f"OK LIN_TARGET: {target}", 0.1)
+                self._queue_delayed_response(f"POS LIN: {target} ROT: {self.pos_rot}", move_time * 0.5)
+                self._queue_delayed_response(f"OK LIN_TARGET: {target}", move_time)
             except Exception:
                 self._queue_delayed_response("ERR Invalid MOVE_LIN argument", 0.1)
             return
@@ -102,8 +105,11 @@ class MockHardware:
         if cmd.startswith(Command.MOVE_ROT):
             try:
                 target = int(cmd.split(" ", 1)[1])
+                dist = abs(target - self.pos_rot)
+                move_time = max(0.5, min(dist / 500.0, 2.0))  # 0.5-2s
                 self.pos_rot = target
-                self._queue_delayed_response(f"OK ROT_TARGET: {target}", 0.1)
+                self._queue_delayed_response(f"POS LIN: {self.pos_lin} ROT: {target}", move_time * 0.5)
+                self._queue_delayed_response(f"OK ROT_TARGET: {target}", move_time)
             except Exception:
                 self._queue_delayed_response("ERR Invalid MOVE_ROT argument", 0.1)
             return

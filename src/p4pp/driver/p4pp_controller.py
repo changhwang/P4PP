@@ -42,6 +42,8 @@ class P4PPController:
         self.has_homed_rot = False
         self.pos_lin = 0
         self.pos_rot = 0
+        self.target_lin: int | None = None
+        self.target_rot: int | None = None
         self.active_task = None
         self._recent_lines = deque(maxlen=500)
         self._last_pos_line = None
@@ -146,20 +148,36 @@ class P4PPController:
         if pos_match:
             self.pos_lin = int(pos_match.group(1))
             self.pos_rot = int(pos_match.group(2))
+            
+            if self.state == State.MOVING:
+                if self.active_task == Command.MOVE_LIN and self.target_lin is not None:
+                    if self.pos_lin == self.target_lin:
+                        self.active_task = None
+                        self.state = State.IDLE
+                        self.target_lin = None
+                elif self.active_task == Command.MOVE_ROT and self.target_rot is not None:
+                    if self.pos_rot == self.target_rot:
+                        self.active_task = None
+                        self.state = State.IDLE
+                        self.target_rot = None
             return
 
         lin_target_match = self.LIN_TARGET_PATTERN.match(line)
         if lin_target_match:
-            self.pos_lin = int(lin_target_match.group(1))
-            self.active_task = None
-            self.state = State.IDLE
+            self.target_lin = int(lin_target_match.group(1))
+            if self.pos_lin == self.target_lin:
+                self.active_task = None
+                self.state = State.IDLE
+                self.target_lin = None
             return
 
         rot_target_match = self.ROT_TARGET_PATTERN.match(line)
         if rot_target_match:
-            self.pos_rot = int(rot_target_match.group(1))
-            self.active_task = None
-            self.state = State.IDLE
+            self.target_rot = int(rot_target_match.group(1))
+            if self.pos_rot == self.target_rot:
+                self.active_task = None
+                self.state = State.IDLE
+                self.target_rot = None
             return
 
         if line.startswith(Response.ERR_PREFIX) or line.startswith(Response.ERROR_PREFIX):

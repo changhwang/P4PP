@@ -54,7 +54,7 @@ class StatusPanel(ctk.CTkFrame):
     def _status_color(status_text: str):
         if status_text in ("IDLE", "READY"):
             return "#2ECC71"
-        if status_text in ("RUNNING", "HOMING", "MEASURING"):
+        if status_text in ("RUNNING", "HOMING", "MEASURING", "MOVING"):
             return "#F1C40F"
         if status_text in ("CONNECTED",):
             return "#5DADE2"
