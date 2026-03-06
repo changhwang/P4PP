@@ -45,9 +45,9 @@ const bool RELAY_REVERSE = HIGH;
 const int SETTLING_TIME_MS =
     100; // Wait time after switching relay before taking a reading
 const long HOMING_MAX_STEPS = 30000;
-const int LIN_HOME_CLEAR_STEPS = 800;       // After first switch hit
+const int LIN_HOME_CLEAR_STEPS = 800;         // After first switch hit
 const int LIN_HOME_FINAL_BACKOFF_STEPS = 250; // After second switch hit
-const int ROT_HOME_CLEAR_STEPS = 200;       // After first switch hit
+const int ROT_HOME_CLEAR_STEPS = 200;         // After first switch hit
 const int ROT_HOME_FINAL_BACKOFF_STEPS = 70;  // After second switch hit
 // Motion conversion baseline (17HS08-1004S + TMC2209 default 1/8 microstep)
 const float ROT_STEPS_PER_DEG = 4.444444f; // 400 steps ~= 90 deg
@@ -275,6 +275,9 @@ void parseCommand(String cmd) {
       Serial.println(rawVolt);
     }
     Serial.println(F("OK ADC_RAW_BOTH"));
+  } else if (cmd.startsWith("MEASURE_N")) {
+    int n = getSampleCount(cmd, 5);
+    executeMeasurementMulti(n);
   } else if (cmd.startsWith("MEASURE_DBG")) {
     int n = getSampleCount(cmd, 4);
     executeMeasurementDebug(n);
@@ -471,9 +474,11 @@ void executeMeasurement() {
   Serial.println(F("--- Delta Cycle Data ---"));
 
   float i_fwd_mA = ((current_fwd * 2.048) / 8388608.0) * 1000.0 / 100.0;
-  float v_fwd_mV = ((voltage_fwd * 2.048) / 8388608.0) * 1000.0;
+  float v_fwd_mV =
+      (((voltage_fwd * 2.048) / 8388608.0) / 4.0) * 1000.0; // Gain = 4
   float i_rev_mA = ((current_rev * 2.048) / 8388608.0) * 1000.0 / 100.0;
-  float v_rev_mV = ((voltage_rev * 2.048) / 8388608.0) * 1000.0;
+  float v_rev_mV =
+      (((voltage_rev * 2.048) / 8388608.0) / 4.0) * 1000.0; // Gain = 4
 
   Serial.print(F("I_fwd: "));
   Serial.print(i_fwd_mA, 4);
@@ -507,6 +512,83 @@ void executeMeasurement() {
   }
 
   Serial.println(F("========================\n"));
+  Serial.println(F("OK MEASURE_COMPLETE"));
+}
+
+// ---------------------------------------------------------------------------
+// Multi-cycle measurement: N complete fwd/rev delta cycles with avg & std
+// ---------------------------------------------------------------------------
+void executeMeasurementMulti(int cycles) {
+  if (cycles < 1)
+    cycles = 1;
+  if (cycles > 20)
+    cycles = 20;
+
+  Serial.print(F("--- Multi-Cycle Measurement (N="));
+  Serial.print(cycles);
+  Serial.println(F(") ---"));
+
+  float rs_values[20];
+  float sum = 0.0;
+
+  for (int c = 0; c < cycles; c++) {
+    // Forward
+    digitalWrite(RELAY_PIN, RELAY_FORWARD);
+    delay(SETTLING_TIME_MS);
+    setMuxAndGain(ADS_MUX_CURRENT, ADS_GAIN_CURRENT, true);
+    int32_t current_fwd = readADC();
+    setMuxAndGain(ADS_MUX_VOLTAGE, ADS_GAIN_VOLTAGE, true);
+    int32_t voltage_fwd = readADC();
+
+    // Reverse
+    digitalWrite(RELAY_PIN, RELAY_REVERSE);
+    delay(SETTLING_TIME_MS);
+    setMuxAndGain(ADS_MUX_CURRENT, ADS_GAIN_CURRENT, true);
+    int32_t current_rev = readADC();
+    setMuxAndGain(ADS_MUX_VOLTAGE, ADS_GAIN_VOLTAGE, true);
+    int32_t voltage_rev = readADC();
+
+    float i_fwd = ((current_fwd * 2.048) / 8388608.0) * 1000.0 / 100.0;
+    float v_fwd = (((voltage_fwd * 2.048) / 8388608.0) / 4.0) * 1000.0;
+    float i_rev = ((current_rev * 2.048) / 8388608.0) * 1000.0 / 100.0;
+    float v_rev = (((voltage_rev * 2.048) / 8388608.0) / 4.0) * 1000.0;
+
+    float delta_v = (v_fwd - v_rev) / 2.0;
+    float test_i = (i_fwd + i_rev) / 2.0;
+
+    float rs = 0.0;
+    if (abs(test_i) > 0.001) {
+      rs = 4.532 * (delta_v / test_i);
+    }
+    rs_values[c] = rs;
+    sum += rs;
+
+    Serial.print(F("CYCLE:"));
+    Serial.print(c + 1);
+    Serial.print(F(" Rs:"));
+    Serial.println(rs, 4);
+  }
+
+  float avg = sum / cycles;
+
+  // Compute std dev
+  float sq_sum = 0.0;
+  for (int c = 0; c < cycles; c++) {
+    float diff = rs_values[c] - avg;
+    sq_sum += diff * diff;
+  }
+  float std_dev = (cycles > 1) ? sqrt(sq_sum / (cycles - 1)) : 0.0;
+
+  Serial.print(F("AVG:"));
+  Serial.print(avg, 4);
+  Serial.print(F(" STD:"));
+  Serial.println(std_dev, 4);
+
+  // Also emit the standard result line for backward compat
+  Serial.print(F("Raw R_sheet: "));
+  Serial.print(avg, 4);
+  Serial.println(F(" Ohm/sq"));
+
   Serial.println(F("OK MEASURE_COMPLETE"));
 }
 
@@ -562,9 +644,11 @@ void executeMeasurementDebug(int samples) {
   Serial.println(voltage_rev);
 
   float i_fwd_mA = ((current_fwd * 2.048) / 8388608.0) * 1000.0 / 100.0;
-  float v_fwd_mV = ((voltage_fwd * 2.048) / 8388608.0) * 1000.0;
+  float v_fwd_mV =
+      (((voltage_fwd * 2.048) / 8388608.0) / 4.0) * 1000.0; // Gain = 4
   float i_rev_mA = ((current_rev * 2.048) / 8388608.0) * 1000.0 / 100.0;
-  float v_rev_mV = ((voltage_rev * 2.048) / 8388608.0) * 1000.0;
+  float v_rev_mV =
+      (((voltage_rev * 2.048) / 8388608.0) / 4.0) * 1000.0; // Gain = 4
 
   float delta_v_mV = (v_fwd_mV - v_rev_mV) / 2.0;
   float test_i_mA = (i_fwd_mA + i_rev_mA) / 2.0;

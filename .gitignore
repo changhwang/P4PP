@@ -19,3 +19,7 @@ venv/
 build/
 output/
 tmp/
+
+# Measurement data (auto-generated)
+data/measurements/
+data/exported/

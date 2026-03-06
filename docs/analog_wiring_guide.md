@@ -1,108 +1,108 @@
-# P4PP - Adafruit Perma-Proto (1606) 마스터 배선 가이드
+# P4PP - Adafruit Perma-Proto (1606) Master Wiring Guide
 
-> **대상 보드**: Adafruit Perma-Proto Half-Size (30열)
-> 빵판과 연결 구조가 동일합니다. 아래의 **마스터 체스판 레이아웃**을 기준으로 부품을 꽂고 납땜하시면 전체 회로가 완성됩니다.
+> **Target Board**: Adafruit Perma-Proto Half-Size (30 Columns)
+> The internal connection structure is identical to a standard breadboard. Follow the **Master Chessboard Layout** below to place and solder components, and the entire circuit will be perfectly assembled.
 
-## 0. Perma-Proto 보드 구조 이해
-- **상하단 전원 레일**: 가로로 길게 연결된 빨간 줄(+), 파란 줄(-) 패드
-- **중앙 부품 영역**: 세로로 5칸씩(a-b-c-d-e, f-g-h-i-j) 연결된 구역 (행 번호 1~30)
-- 실제 보드의 레터링을 자세히 보시면, 보통 **맨 아래쪽 구멍이 a, 그 위가 e**, 중앙 갭을 지나 **맨 위쪽 구멍이 j**입니다. (아래 그림 참조)
+## 0. Understanding the Perma-Proto Board Structure
+- **Top & Bottom Power Rails**: The long horizontal red (+) and blue (-) pads.
+- **Central Component Area**: Vertical 5-hole groups (a-b-c-d-e, f-g-h-i-j) forming Rows 1 to 30.
+- Looking closely at the actual board's lettering, the **bottom-most hole is usually 'a', the one above it 'e'**, skipping the center gap, and the **top-most hole is 'j'**. (See diagram below)
 
 ```text
-       1  2  3  4  5    (열 번호, 왼쪽에서 오른쪽으로)
-  (파란줄) - - - - - - - - - - -  ← 상단 파란 줄 (-)
-  (빨간줄) + + + + + + + + + + +  ← 상단 빨간 줄 (+)
+       1  2  3  4  5    (Column Number, Left to Right)
+  (Blue line)  - - - - - - - - - - -  ← Top Blue Line (-)
+  (Red line)   + + + + + + + + + + +  ← Top Red Line (+)
         ──────────────── 
       j o  o  o  o  o
       i o  o  o  o  o
-      h o  o  o  o  o   ← 상단 중앙 (f~j 그룹)
+      h o  o  o  o  o   ← Top Center Group (f~j)
       g o  o  o  o  o
       f o  o  o  o  o
-        -------------   ← 중앙 갭 (단절부)
+        -------------   ← Center Gap 
       e o  o  o  o  o
       d o  o  o  o  o
-      c o  o  o  o  o   ← 하단 중앙 (a~e 그룹)
+      c o  o  o  o  o   ← Bottom Center Group (a~e)
       b o  o  o  o  o
       a o  o  o  o  o
         ──────────────── 
-  (파란줄) - - - - - - - - - - -  ← 하단 파란 줄 (-)
-  (빨간줄) + + + + + + + + + + +  ← 하단 빨간 줄 (+)
+  (Blue line)  - - - - - - - - - - -  ← Bottom Blue Line (-)
+  (Red line)   + + + + + + + + + + +  ← Bottom Red Line (+)
 ```
 
-## 1. 전원 레일 할당 (규칙) - ⚡ 이 규칙을 절대 어기면 안 됩니다! ⚡
+## 1. Power Rail Allocation (Rules) - ⚡ NEVER BREAK THESE RULES! ⚡
 
-12V 전원이 3.3V 부품에 들어가면 즉시 파괴되므로, **보드 위/아래 전원줄의 쓰임새를 엄격히 분리**합니다.
+If 12V power enters 3.3V components, they will be instantly destroyed. We must **strictly separate the usage of the top and bottom power rails**.
 
-- **[위쪽 라인] 3.3V ADC / 3.3V 전용**:
-  1. **상단 파란 줄 (-)**: `AGND` (아날로그 그라운드 - 3.3V용)
-  2. **상단 빨간 줄 (+)**: `3V3_DIG` (**아두이노 3.3V 순정 입력 전용**)
-- **[아래쪽 라인] 12V 모터/릴레이 전용**:
-  3. **하단 파란 줄 (-)**: `12V GND` (모터/릴레이용 그라운드) -> *나중에 Step 6에서만 씁니다!*
-  4. **하단 빨간 줄 (+)**: `12V+` (12V 어댑터 전원) -> *나중에 Step 6에서만 씁니다!*
+- **[Top Line] 3.3V ADC / 3.3V Only**:
+  1. **Top Blue Line (-)**: `AGND` (Analog Ground - for 3.3V)
+  2. **Top Red Line (+)**: `3V3_DIG` (**Pure 3.3V Input from Arduino ONLY**)
+- **[Bottom Line] 12V Motor/Relay Only**:
+  3. **Bottom Blue Line (-)**: `12V GND` (Ground for Motor/Relay) -> *Only used later in Step 6!*
+  4. **Bottom Red Line (+)**: `12V+` (12V Adapter Power) -> *Only used later in Step 6!*
 
 > [!CAUTION]
-> **절대로 아두이노를 하단 빨간 줄(12V)에 연결하거나, 위쪽 빨간 줄에 12V를 넣지 마세요.**
-> 상단 `-` 레일(AGND)과 하단 `-` 레일(12V GND) 역시 서로 직접 연결하면 안 됩니다 (Star Ground 원칙).
+> **NEVER connect the Arduino to the bottom red line (12V) or put 12V onto the top red line.**
+> Similarly, the top `-` rail (AGND) and bottom `-` rail (12V GND) should NOT be directly linked indiscriminately (rely on Star Ground principles).
 
 ---
 
-## 🗺️ 마스터 체스판 레이아웃 (Top-Down View)
-아래 표는 60열 Perma-Proto 보드의 행(1~32)에 부품이 어떻게 꽂히는지 보여줍니다. (하단 구역이 a~e, 상단 구역이 f~j)
+## 🗺️ Master Chessboard Layout (Top-Down View)
+The table below illustrates how components are placed across Rows (1~32) of the 60-column Perma-Proto board. (Bottom group is a~e, Top group is f~j)
 
-| 행 (Row) | 기능 / 라벨 | [f, g, h, i, j] (상단 구역) | [a, b, c, d, e] (하단 구역) | 연결 설명 |
+| Row | Function / Label | [f, g, h, i, j] (Top Group) | [a, b, c, d, e] (Bottom Group) | Connection Notes |
 |:---:|:---|:---|:---|:---|
-| **1** | **AGND** 여분 | **점퍼선**(Top Blue➡️1j), **0.1µF**(1i), **1µF**(1h) | 🔴 **I+** 포스트로 (선) | GND 노드 (점퍼 연결) |
-| **2** | [빈칸] | (캐패시터 몸체가 가로지름 ⬇️) | ⚫ **I-** 포스트로 (선) | 부품 다리 간격용 여백 |
-| **3** | **3V3_A** | **10Ω**(Top Red➡️3j), **0.1µF**(3i), **1µF**(3h) | (여백) | 깨끗한 3.3V 노드 (Step 2) |
-| **4** | **IN0** | **외부 BAT54 모듈의 IN0 선** | **[ADS1220 AIN0]** ➡️ 행8(AIN0) 점퍼 | V+ 센싱 라인 대기 |
-| **5** | **IN1** | **외부 BAT54 모듈의 IN1 선** | **[ADS1220 AIN1]** ➡️ 행9(AIN1) 점퍼 | V- 센싱 라인 대기 |
-| **6** | [입력] | **1kΩ**(↑), 🟢 **V-** 포스트로 (선) | **1kΩ**(↑), 🔵 **V+** 포스트로 (선) | 포스트 입력 및 저항 |
-| **7** | ADS_핀1,16 | **[ADS VDD]** ➡️ 행3(3V3_A) 점퍼 | **[ADS AVSS]**(미사용/내부GND) | 전원 3.3V 연결 |
-| **8** | ADS_핀2,15 | **[ADS DRDY]** ➡️ 아두이노 D9 | **[ADS AIN0]** ➡️ 행4(IN0) 점퍼 | 데이터레디 / 센스+ |
-| **9** | ADS_핀3,14 | **[ADS CS]** ➡️ 아두이노 D10 | **[ADS AIN1]** ➡️ 행5(IN1) 점퍼 | 칩셀렉트 / 센스- |
-| **10** | ADS_핀4,13 | **[ADS SCLK]** ➡️ 아두이노 D13 | **[ADS AIN2]** ➡️ 행21(Shunt+) | 클럭 / 션트+ |
-| **11** | ADS_핀5,12 | **[ADS DIN(MOSI)]** ➡️ 아두이노 D11 | **[ADS AIN3]** ➡️ 행22(Shunt-) | 데이터입력 / 션트- |
-| **12** | ADS_핀6,11 | **[ADS DOUT(MISO)]** ➡️ 아두이노 D12 | **[ADS AVDD]**(미사용/내부VDD) | 데이터출력 / 아날로그VDD |
-| **13** | ADS_핀7,10 | **[ADS GND]** ➡️ 행1(GND) 점퍼 | **[ADS REFP]**(미사용) | 메인 그라운드 / 외부참조+ |
-| **14** | ADS_핀8,9 | **[ADS AVSS]**(미사용/내부GND) | **[ADS REFN]**(미사용) | 아날로그GND / 외부참조- |
-| **15** | [빈칸] | (여백) | (여백) | |
-| **16** | [빈칸] | (여백) | (여백) | |
-| **17** | [빈칸] | (여백) | (여백) | |
-| **18** | [빈칸] | (여백) | (여백) | |
-| **19** | [전류원]| (여백) | (여백) | ⬇️ **LM334 위치** ⬇️ |
-| **20** | V+ | | **LM334(V+)** ➡️ 3V3_A 점퍼 | LM334 전원 |
-| **21** | R / Sh+ | ➡️ 행10(AIN2) 점퍼 | **LM334(R)**, **Rset(68Ω)**(↓) | Rset 연결망 & Shunt+ |
-| **22** | OUT/Sh-| ➡️ 행11(AIN3) 점퍼 | **LM334(V-)**, **Rset**(↑), **100Ω**(↓) | 정전류 출력 & Shunt- |
-| **23** | S_COM | | **100Ω**(↑), **DPDT_COM_A**(점퍼선) | 100Ω 통과 후 릴레이로 |
-| **24** | [빈칸] | (여백) | (여백) | ⬇️ **릴레이/12V (격리)** ⬇️|
-| **25** | RLY_COM| **DPDT COM_B** ➡️ AGND 점퍼 | **DPDT COM_A** ⬅️ 행23에서 점퍼 | 릴레이 입력단 |
-| **26** | RLY_NO | **DPDT NO_B** ➡️ 행1(I+) 점퍼 | **DPDT NO_A** ➡️ 행2(I-) 점퍼 | 리버스 (교차 스왑) |
-| **27** | RLY_NC | **DPDT NC_B** ➡️ 행2(I-) 점퍼 | **DPDT NC_A** ➡️ 행1(I+) 점퍼 | 포워드 (정방향) |
-| **28** | 코일+ | **1N4148 (Cathode)** | **DPDT Coil 1**, **12V+**(Bot Red) 점퍼| 코일 구동 전원 |
-| **29** | 코일- | **1N4148 (Anode)** | **DPDT Coil 2**, **PN2222(Collector)**| 트랜지스터로 스위칭 |
-| **30** | BASE | **10kΩ**(↓풀다운) | **PN2222(Base)**, **1kΩ**(↓) | 아두이노 신호 입력단 |
-| **31** | EMITTER| **1kΩ**(↑)➡️아두이노 핀 / **10kΩ**(↑)➡️GND | **PN2222(Emitter)** ➡️ 12V GND 점퍼 | TR 접지 & 제어망 |
+| **1** | **AGND** Extra | **Jumper**(Top Blue➡️1j), **0.1µF**(1i), **1µF**(1h) | 🔴 To **I+** Post (Wire) | GND Node (Jumper Link) |
+| **2** | [Empty] | (Capacitor bodies bridge across ⬇️) | ⚫ To **I-** Post (Wire) | Gap for component legs |
+| **3** | **3V3_A** | **10Ω**(Top Red➡️3j), **0.1µF**(3i), **1µF**(3h) | (Empty) | Purified 3.3V Node (Step 2) |
+| **4** | **IN0** | **IN0 Wire from external BAT54** | **[ADS1220 AIN0]** ➡️ Jumper to Row 8(AIN0) | V+ Sense Line Standby |
+| **5** | **IN1** | **IN1 Wire from external BAT54** | **[ADS1220 AIN1]** ➡️ Jumper to Row 9(AIN1) | V- Sense Line Standby |
+| **6** | [Input] | **1kΩ**(↑), 🟢 To **V-** Post (Wire) | **1kΩ**(↑), 🔵 To **V+** Post (Wire) | Post Input & Resistor |
+| **7** | ADS_Pin1,16 | **[ADS VDD]** ➡️ Jumper to Row 3(3V3_A) | **[ADS AVSS]**(Unused/Internal GND) | 3.3V Power Link |
+| **8** | ADS_Pin2,15 | **[ADS DRDY]** ➡️ Arduino D9 | **[ADS AIN0]** ➡️ Jumper to Row 4(IN0) | Data Ready / Sense+ |
+| **9** | ADS_Pin3,14 | **[ADS CS]** ➡️ Arduino D10 | **[ADS AIN1]** ➡️ Jumper to Row 5(IN1) | Chip Select / Sense- |
+| **10** | ADS_Pin4,13 | **[ADS SCLK]** ➡️ Arduino D13 | **[ADS AIN2]** ➡️ Jumper to Row 21(Shunt+) | Clock / Shunt+ |
+| **11** | ADS_Pin5,12 | **[ADS DIN(MOSI)]** ➡️ Arduino D11 | **[ADS AIN3]** ➡️ Jumper to Row 22(Shunt-) | Data IN / Shunt- |
+| **12** | ADS_Pin6,11 | **[ADS DOUT(MISO)]** ➡️ Arduino D12 | **[ADS AVDD]**(Unused/Internal VDD) | Data OUT / Analog VDD |
+| **13** | ADS_Pin7,10 | **[ADS GND]** ➡️ Jumper to Row 1(GND) | **[ADS REFP]**(Unused) | Main Ground / Ext Ref+ |
+| **14** | ADS_Pin8,9 | **[ADS AVSS]**(Unused/Internal GND) | **[ADS REFN]**(Unused) | Analog GND / Ext Ref- |
+| **15** | [Empty] | (Empty) | (Empty) | |
+| **16** | [Empty] | (Empty) | (Empty) | |
+| **17** | [Empty] | (Empty) | (Empty) | |
+| **18** | [Empty] | (Empty) | (Empty) | |
+| **19** | [Curr Src]| (Empty) | (Empty) | ⬇️ **LM334 Area** ⬇️ |
+| **20** | V+ | | **LM334(V+)** ➡️ Jumper to 3V3_A | LM334 Power |
+| **21** | R / Sh+ | ➡️ Jumper to Row 10(AIN2) | **LM334(R)**, **Rset(68.1Ω)**(↓) | Rset Network & Shunt+ |
+| **22** | OUT/Sh-| ➡️ Jumper to Row 11(AIN3) | **LM334(V-)**, **Rset**(↑), **100Ω**(↓) | Constant Curr Out & Shunt- |
+| **23** | S_COM | | **100Ω**(↑), **DPDT_COM_A**(Jumper wire) | Post 100Ω to Relay |
+| **24** | [Empty] | (Empty) | (Empty) | ⬇️ **Relay/12V (Isolated)** ⬇️|
+| **25** | RLY_COM| **DPDT COM_B** ➡️ Jumper to AGND | **DPDT COM_A** ⬅️ Jumper from Row 23 | Relay IN terminal |
+| **26** | RLY_NO | **DPDT NO_B** ➡️ Jumper to Row 1(I+) | **DPDT NO_A** ➡️ Jumper to Row 2(I-) | Reverse (Cross Swap) |
+| **27** | RLY_NC | **DPDT NC_B** ➡️ Jumper to Row 2(I-) | **DPDT NC_A** ➡️ Jumper to Row 1(I+) | Forward (Default) |
+| **28** | Coil+ | **1N4148 (Cathode)** | **DPDT Coil 1**, **12V+**(Bot Red) Jumper| Coil Drive Power |
+| **29** | Coil- | **1N4148 (Anode)** | **DPDT Coil 2**, **PN2222(Collector)**| Transistor Switching |
+| **30** | BASE | **10kΩ**(↓Pull-down) | **PN2222(Base)**, **1kΩ**(↓) | Arduino Signal IN |
+| **31** | EMITTER| **1kΩ**(↑)➡️Arduino / **10kΩ**(↑)➡️GND | **PN2222(Emitter)** ➡️ Jumper to 12V GND | TR Ground & Control Net |
 
-*(※ 위 체스판 다이어그램은 보유하신 CJMCU-1220 핀 배열을 완벽히 반영한 맞춤 설계입니다.)*
+*(※ The chessboard diagram above perfectly reflects the pin layout of your CJMCU-1220 module.)*
 
 ---
 
-## ♟️ 조립 진행: Step 1 & 2 - 전원 레일 할당 및 파워 필터 구성
+## ♟️ Assembly Progress: Step 1 & 2 - Power Rails & Filters
 
-처음부터 조립하시는 분들을 위한 초기 필수 세팅 단계입니다.
+Initial critical setup steps for those assembling from scratch.
 
-### Step 1: 라벨링 및 준비
+### Step 1: Labeling & Preparation
 
-- [ ] 패널 포스트에 **I+, V+, V-, I-** 라벨 부착
-- [ ] 스트립보드에 테스트 포인트 위치 표시
-- [ ] SOT23→DIP 어댑터에 BAT54A, BAT54C 납땜 (핀 방향 주의!)
+- [ ] Attach **I+, V+, V-, I-** labels to the panel binding posts.
+- [ ] Mark test point locations on the stripboard.
+- [ ] Solder BAT54A and BAT54C onto SOT23→DIP adapters. (Mind pin orientation!)
 
 > [!TIP]
-> **SOT23 ↔ DIP 어댑터 핀 매핑 및 납땜 가이드**
+> **SOT23 ↔ DIP Adapter Pin Mapping & Soldering Guide**
 >
-> 1. **BAT54 부품 방향 (SOT-23)**:
->    부품을 위에서 내려다봤을 때 한쪽에는 핀이 1개, 반대쪽에는 핀이 2개 있습니다.
->    핀이 2개인 쪽을 왼쪽으로 두었을 때, **왼쪽 위가 1번, 왼쪽 아래가 2번, 오른쪽 혼자 있는 핀이 3번**입니다.
+> 1. **BAT54 Orientation (SOT-23)**:
+>    Looking down at the part, one side has 1 pin, the opposite side has 2 pins.
+>    If you place the 2-pin side on the left, **top-left is Pin 1, bottom-left is Pin 2, and the solo right pin is Pin 3**.
 >    ```text
 >          ┌───┐
 >       1 ─┤   ├─ 3
@@ -113,301 +113,300 @@
 >    - **BAT54A**: pin1=Cathode1, pin2=Cathode2, pin3=Common Anode
 >    - **BAT54C**: pin1=Anode1, pin2=Anode2, pin3=Common Cathode
 >    
-> 2. **DIP 어댑터 보드 확인 및 넘버링**:
->    - 어댑터 보드 표면에 작은 SOT23용 패드(금속판) 3개가 있습니다.
->    - 어떤 스루홀(DIP 핀 구멍)이 SOT23 패드의 1, 2, 3번에 해당하는지 숫자가 명확히 적혀있지 않은 경우가 많습니다.
->    - **납땜 전 필수 작업**: 멀티미터의 **도통 테스트(Continuity, 삐 소리 나는 모드)**를 이용해 SOT23 패드(1, 2, 3 위치)와 핀을 꽂을 구멍들을 하나씩 찍어보며 연결 관계를 파악하세요.
->    - 파악한 후 어댑터 보드의 구멍 옆에 **네임펜으로 1, 2, 3 번호를 적어두면** 스트립보드에 꽂을 때 헷갈리지 않습니다.
+> 2. **DIP Adapter Board Numbering**:
+>    - The adapter has 3 small SOT23 surface pads.
+>    - The through-holes (DIP pins) corresponding to pads 1, 2, and 3 are often unlabeled.
+>    - **Mandatory Pre-solder Step**: Use a multimeter in **Continuity mode (beep)** to map which through-hole connects to SOT23 pad 1, 2, and 3.
+>    - Once identified, **write 1, 2, 3 next to the holes with a sharpie** to avoid confusion later.
 >
-> 3. **SMD 납땜 팁**:
->    - 어댑터 보드의 3개 패드 중 **하나에만 먼저 인두기로 납을 살짝** 묻혀둡니다.
->    - 핀셋으로 부품을 정확한 방향으로 올려 패드에 맞춘 뒤, 인두기로 납을 녹여 **다리 하나만 먼저 고정(가조립)**합니다.
->    - 정렬이 삐뚤어지지 않았는지 확인 후, 나머지 다리도 납땜합니다.
+> 3. **SMD Soldering Tip**:
+>    - First, **apply a tiny bit of solder to just ONE** of the 3 pads on the adapter.
+>    - Using tweezers, align the component perfectly and melt that single pad to **tack it in place (temporary hold)**.
+>    - Check the alignment. If straight, solder the remaining legs.
 
-### Step 2: 전원 필터 섹션 조립 (Board A & B)
+### Step 2: Power Filter Assembly (Board A & B)
 
 > [!TIP]
-> **배선 가이드 (색상 및 굵기 권장)**
-> - **GND (그라운드)**: 항상 **검은색(Black)** 또는 **파란색(Blue)** 연선/단선을 사용하세요. (AWG 22 권장)
-> - **3.3V 전원**: 항상 **빨간색(Red)** 또는 **주황색(Orange)** 연선/단선을 사용하세요. (AWG 22 권장)
-> - *스트립보드 내 점퍼*는 피복을 벗긴 **단선(Solid wire)**이 깔끔하고, *보드 외부나 모듈 간 연결*은 끊어지지 않는 **연선(Stranded wire)**이 좋습니다.
+> **Wiring Guide (Color & Gauge Recs)**
+> - **GND (Ground)**: Always use **Black** or **Blue** wire. (AWG 22 recommended)
+> - **3.3V Power**: Always use **Red** or **Orange** wire. (AWG 22 recommended)
+> - Use bare **Solid wire** for *short jumpers on the stripboard*, and **Stranded wire** for *connections going off-board or between modules*.
 
-조립 (섹션 5.2.1 배치도 기준):
+Assembly (Ref. Layout Plot):
 
-1.  **Arduino 전원 연결 (전선 사용)**:
-    - [ ] `Arduino 3V3` 핀 ➡️ **스트립보드 열2 (3V3_DIG)**: **빨간색** 전선으로 연결
-    - [ ] `Arduino GND` 핀 ➡️ **스트립보드 열1 (AGND)**: **검은색** 전선으로 연결
-2.  **전원 필터 부품 납땜 (전선 불필요, 부품 다리를 직접 꽂음)**:
-    - [ ] **10Ω 저항 (BOM #39)**: 한쪽 다리는 `열2(3V3_DIG)`, 반대쪽 다리는 `열3(3V3_A)`에 꽂아 납땜 (가로 방향, 예: 행 3)
-    - [ ] **0.1µF 세라믹 캐패시터 (BOM #41)**: 한쪽 다리는 `열1(AGND)`, 반대쪽 다리는 `열3(3V3_A)`에 꽂아 납땜 (가로 방향, 예: 행 E)
-    - [ ] **1µF 세라믹 캐패시터 (BOM #40)**: 0.1µF와 마찬가지로 `열1(AGND)`과 `열3(3V3_A)`에 꽂아 납땜 (가로 방향, 예: 행 F)
+1.  **Arduino Power Links (Using wire)**:
+    - [ ] `Arduino 3V3` pin ➡️ **Stripboard Column 2 (3V3_DIG)**: Link with **Red** wire
+    - [ ] `Arduino GND` pin ➡️ **Stripboard Column 1 (AGND)**: Link with **Black** wire
+2.  **Power Filter Components (No wire needed, plug legs directly)**:
+    - [ ] **10Ω Resistor ([BOM #28])**: One leg in `Col 2(3V3_DIG)`, the other in `Col 3(3V3_A)`. (Horizontal, e.g., Row 3)
+    - [ ] **0.1µF Ceramic Cap ([BOM #30])**: One leg in `Col 1(AGND)`, the other in `Col 3(3V3_A)`. (Horizontal, e.g., Row E)
+    - [ ] **1µF Ceramic Cap ([BOM #29])**: Similarly, connect between `Col 1(AGND)` and `Col 3(3V3_A)`. (Horizontal, e.g., Row F)
 
-**검증 (멀티미터 직류 전압 모드)**:
+**Verification (Multimeter DC Voltage Mode)**:
 ```text
-1. Arduino에 USB 케이블을 연결하여 전원을 공급합니다.
-2. 흑색 프로브(COM)를 '열1(AGND)'에 고정한 상태에서:
-   - 적색 프로브를 '열2(3V3_DIG)'에 댔을 때: 3.3V ± 0.1V ✓
-   - 적색 프로브를 '열3(3V3_A)'에 댔을 때: 3.3V ± 0.1V ✓ (열2와 거의 같아야 함)
+1. Plug a USB cable into the Arduino to supply power.
+2. Hold the black probe (COM) firmly on 'Col 1 (AGND)':
+   - Touch red probe to 'Col 2 (3V3_DIG)': Expect 3.3V ± 0.1V ✓
+   - Touch red probe to 'Col 3 (3V3_A)': Expect 3.3V ± 0.1V ✓ (Should be nearly identical to Col 2)
 ```
 
 ---
 
-## ♟️ 조립 진행: Step 3 - ADS1220 ADC 모듈 연결 (BOM #2)
+## ♟️ Assembly Progress: Step 3 - ADS1220 ADC Module (BOM #2)
 
-보유하신 CJMCU-1220 모듈의 정확한 핀 배열에 맞춰 중앙 갭을 부릿지처럼 건너가도록 가로로 꽂습니다. 
+Mount the CJMCU-1220 horizontally so it bridges across the center gap of the breadboard according to its specific pinout.
 
-### 3.1 ADS1220 16-Pin 모듈 맞춤형 배치
+### 3.1 ADS1220 16-Pin Custom Placement
 
-모듈의 양쪽 다리가 빵판의 **[열 d]**와 **[열 h]**(또는 g) 구멍에 쏙 들어가도록 누르시면 됩니다. (행 7번 ~ 14번 사용)
+Press the module firmly so its dual-row header pins slide into **[Column d]** and **[Column h]** (or g) holes. (Uses Rows 7 to 14)
 
 ```text
-       1  2  3  4  5    (열 번호)
-         (윗부분 전원/필터 생략)
-        ---│--│--│------   ← 중앙 갭 (단절)
+       1  2  3  4  5    (Column Number)
+         (Top power/filters omitted)
+        ---│--│--│------   ← Center Gap 
       ...
-(행 7) h [VDD ] ├───┤ [AVSS] d
-(행 8) h [DRDY] ├───┤ [IN0 ] d
-(행 9) h [ CS ] ├───┤ [IN1 ] d
-(행10) h [SCLK] ├───┤ [IN2 ] d
-(행11) h [DIN ] ├───┤ [IN3 ] d
-(행12) h [DOUT] ├───┤ [AVDD] d
-(행13) h [GND ] ├───┤ [REFP] d
-(행14) h [AVSS] ├───┤ [REFN] d
+(Row 7) h [VDD ] ├───┤ [AVSS] d
+(Row 8) h [DRDY] ├───┤ [IN0 ] d
+(Row 9) h [ CS ] ├───┤ [IN1 ] d
+(Row10) h [SCLK] ├───┤ [IN2 ] d
+(Row11) h [DIN ] ├───┤ [IN3 ] d
+(Row12) h [DOUT] ├───┤ [AVDD] d
+(Row13) h [GND ] ├───┤ [REFP] d
+(Row14) h [AVSS] ├───┤ [REFN] d
         ──────────────── 
            ▼  ▼  ▼
 ```
 
-### 3.2 ADS1220 전원선 연결 (AVDD/AVSS 통합)
+### 3.2 ADS1220 Power Wiring (Unifying AVDD/AVSS)
 
-모듈의 아날로그 전원(AVDD/AVSS)과 디지털 전원(VDD/GND)이 보드 내부에서 이어져 있지 않은 타입의 모듈입니다! 따라서 총 4가닥의 전원/접지 연결이 필요합니다.
+This specific module type does NOT internally bridge its analog power (AVDD/AVSS) and digital power (VDD/GND). Therefore, you must make a total of 4 power/ground connections!
 
-1. **디지털 전원 연결**:
-   - `VDD` 핀 (행 7, 상단 빈 구멍) ↔ **[행 3, 3V3_A]** 연결
-   - `GND` 핀 (행 13, 상단 빈 구멍) ↔ **[행 1, 메인 GND]** 연결
-2. **아날로그 전원 연결 (좌측 레이아웃 최적화)**:
-   - `AVDD` 핀 (행 12 좌측) ➡️ **`12c` ↔ `3d`** 점퍼 연결 (행 3의 정화된 3.3V_A로 최단거리 직결)
-   - `AVSS` 핀 (행 7 좌측) ➡️ **`7c` ↔ `1c`** 점퍼 연결 (행 1의 정화된 AGND로 최단거리 직결)
-*(※ 칩 내부 회로가 모두 깨어나려면 VDD와 AVDD 양쪽 모두에 3.3V가 공급되어야 합니다!)*
+1. **Digital Power Connection**:
+    - `VDD` Pin (Row 7, top empty hole) ↔ **[Row 3, 3V3_A]** Jumper
+    - `GND` Pin (Row 13, top empty hole) ↔ **[Row 1, Main GND]** Jumper
+2. **Analog Power Connection (Left-Layout Optimization)**:
+    - `AVDD` Pin (Row 12, Left side) ➡️ **`12c` ↔ `3d`** Jumper (Direct short path to purified 3V3_A on Row 3)
+    - `AVSS` Pin (Row 7, Left side) ➡️ **`7c` ↔ `1c`** Jumper (Direct short path to purified AGND on Row 1)
+*(※ Both VDD and AVDD must receive 3.3V for the internal circuits to fully wake up!)*
 
-### 3.3 아두이노 ↔ ADS1220 통신선(SPI) 연결
+### 3.3 Arduino ↔ ADS1220 SPI Communication Wiring
 
-h열 쪽 핀들에서 점퍼선을 뽑아 **아두이노의 디지털 핀**으로 길게 연결합니다.
+Run long jumper wires from the 'h' column side directly to the **Arduino's digital pins**.
 
-- [x] 모듈 **`SCLK`** 핀 (행 10) ➡️ 아두이노 **`D13`** 핀 `[노란색 선]` ✅
-- [x] 모듈 **`DIN` (MOSI)** 핀 (행 11) ➡️ 아두이노 **`D11`** 핀 `[주황색 선]` ✅
-- [x] 모듈 **`DOUT` (MISO)** 핀 (행 12) ➡️ 아두이노 **`D12`** 핀 `[흰색 선]` ✅
-- [x] 모듈 **`CS`** 핀 (행 9) ➡️ 아두이노 **`D10`** 핀 `[갈색 선]` ✅
-- [x] 모듈 **`DRDY`** 핀 (행 8) ➡️ 아두이노 **`D9`** 핀 `[보라색 선]` ✅
+- [x] Module **`SCLK`** Pin (Row 10) ➡️ Arduino **`D13`** `[Yellow Wire]` ✅
+- [x] Module **`DIN` (MOSI)** Pin (Row 11) ➡️ Arduino **`D11`** `[Orange Wire]` ✅
+- [x] Module **`DOUT` (MISO)** Pin (Row 12) ➡️ Arduino **`D12`** `[White Wire]` ✅
+- [x] Module **`CS`** Pin (Row 9) ➡️ Arduino **`D10`** `[Brown Wire]` ✅
+- [x] Module **`DRDY`** Pin (Row 8) ➡️ Arduino **`D9`** `[Purple Wire]` ✅
 
-> **SPI 통신선은 Stranded (듀폰 케이블)를 사용합니다.** 디지털 신호선이라 노이즈에 강하고, 아두이노까지 길게 가로지르기 편합니다.
+> **Use Stranded wire (Dupont cables) for SPI lines.** Being digital signals, they are resilient to noise and much easier to route long distances to the Arduino.
 
-### 🧪 검증 (납땜/전원 불량 체크)
-1. 아두이노에 USB를 꽂습니다.
-2. 멀티미터로 **VDD(행 7)**, **AVDD(행 12 d열)** 모두 3.3V 확인.
-3. `firmware/debug/ads1220_spi_test/ads1220_spi_test.ino` 업로드 후 시리얼 모니터 확인.
-4. **Write/Read 검증**: 레지스터에 `0x6A`를 쓰고 읽어서 일치하면 통신 성공.
+### 🧪 Verification (Solder/Power Integrity Check)
+1. Plug USB into Arduino.
+2. Probe **VDD (Row 7)** and **AVDD (Row 12, col d)** with multimeter. Both must show 3.3V.
+3. Upload `firmware/debug/ads1220_spi_test/ads1220_spi_test.ino` and open the Serial Monitor.
+4. **Write/Read Verification**: Writing `0x6A` to a register and reading it back out successfully proves SPI communication is fully operational.
 
 > [!IMPORTANT]
-> **ADS1220의 기본 레지스터 값은 모두 `0x00`입니다!** (`0x08`이 아닙니다!)
-> 따라서 단순 읽기만으로는 통신 성공/실패를 구분할 수 없습니다.
-> 반드시 **Write → Read Back** 방식으로 검증하세요.
+> **The default register values for the ADS1220 are ALL `0x00`!** (Not `0x08`!)
+> Therefore, simply reading a `0x00` does not confirm success.
+> You must verify using a **Write → Read Back** pattern.
 
-✅ **2026-02-20 검증 완료**: `Reg0 = 0x6A` Write/Read 일치 확인. SPI 통신 정상.
+✅ **2026-02-20 Verification Completed**: `Reg0 = 0x6A` Write/Read match confirmed. SPI comms normal.
 
 ---
 
-## ♟️ 조립 진행: Step 4 - LM334 정전류원 회로
+## ♟️ Assembly Progress: Step 4 - LM334 Constant Current Source
 
-ADS1220 모듈 아래쪽 빈 공간(행 20~23)을 사용하여 저항 측정의 심장부인 1mA 정전류원(Constant Current Source)을 조립합니다.
+Utilize the empty space beneath the ADS1220 (Rows 20~23) to assemble the 1mA Constant Current Source, the beating heart of resistance measurement.
 
-### 4.0 준비물 (BOM 확인)
-조립 전 아래 부품 3개를 정확히 찾아주세요.
-1. **[BOM #3] LM334Z/NOPB (정전류원 IC)**:
-   - 까만색 반달 모양 (TO-92 패키지)
-   - 겉면에 `LM334Z` 라고 적혀있습니다.
-2. **[BOM #4] 68.1Ω 저항 (0.1% 정밀도)**:
-   - 파란색 몸통 (정밀 저항)
-   - 띠 색깔: **[파랑 - 회색 - 갈색 - 금색 - 보라]** 또는 겉면에 `68R1` 표기
-   - 1mA 전류를 만들어내는 핵심(Rset)입니다.
-3. **[BOM #6] 100Ω 저항 (0.1% 정밀도, Shunt)**:
-   - 파란색 몸통 (정밀 저항)
-   - 띠 색깔: **[갈색 - 검정 - 검정 - 검정 - 보라]** 또는 겉면에 `100R` 표기
-   - 실제로 흐르는 전류를 감시하는 션트 저항입니다.
+### 4.0 Preparation (Check BOM)
+Locate these exact three components before assembly.
+1. **[BOM #3] LM334Z/NOPB (Constant Current Source IC)**:
+   - Black half-cylinder (TO-92 Package)
+   - Marked `LM334Z`.
+2. **[BOM #4] 68.1Ω Resistor (0.1% Precision)**:
+   - Blue body (Precision)
+   - Color bands: **[Blue - Gray - Brown - Gold - Violet]** or marked `68R1`.
+   - The core component (Rset) generating the 1mA current.
+3. **[BOM #6] 100Ω Resistor (0.1% Precision, Shunt)**:
+   - Blue body (Precision)
+   - Color bands: **[Brown - Black - Black - Black - Violet]** or marked `100R`.
+   - The shunt resistor used to monitor the *actual* amount of current flowing.
 
-### 4.1 부품 배치 가이드 (하단 구역 a~e열)
+### 4.1 Placement Guide (Bottom Group, Columns a~e)
 
-여기는 **보드 오른쪽 하단(a~e열)**을 사용합니다! 아까 짠 마스터 레이아웃 기준입니다.
+Use the **bottom-right of the board (Cols a~e)** based on the master layout.
 
 ```text
-       1  2  3  4  5    (열 번호)
-       a  b  c  d  e    (알파벳)
+       1  2  3  4  5    (Column Num)
+       a  b  c  d  e    (Alpha)
       ...
-(행20) [LM_V+] ───점퍼───► (행7, VDD)  ← ⚠️ 행 3이 꽉 차서 여기서 끌어옵니다!
-(행21) [LM_R ] ─────────┐ 
-(행22) [LM_V-] ───┐     │ (Rset 68.1Ω)
-                  │     │ 
-(행23) [S_COM] ───┴─────┴ (100Ω Shunt)
+(Row20) [LM_V+] ───Jumper───► (Row 7, VDD)  ← ⚠️ Row 3 is too crowded, pull from here!
+(Row21) [LM_R ] ─────────┐ 
+(Row22) [LM_V-] ───┐     │ (Rset 68.1Ω)
+                   │     │ 
+(Row23) [S_COM] ───┴─────┴ (100Ω Shunt)
 ```
 
-### 4.2 부품 꽂기 상세 순서 (유저 맞춤형 최적화 레이아웃 완료!)
+### 4.2 Detailed Insertion Order (User-Optimized Layout!)
 
-> 🚨 **초정밀 주의사항**: 반달 모양의 LM334는 **평평한 면(글씨가 적힌 면)**이 나를 보게(정면) 둔 상태에서 왼쪽 패드부터 순서대로 핀 1, 2, 3번입니다.
+> 🚨 **Ultra-Precision Note**: With the flat face (printed side) of the half-cylinder LM334 facing you, the pins are 1, 2, and 3 from left to right.
 
-1. **LM334 (#3) 꽂기**:
-   - 핀 1 (V+) ➡️ **20b** 구멍
-   - 핀 2 (R)  ➡️ **21b** 구멍
-   - 핀 3 (V-) ➡️ **22b** 구멍
-2. **Rset 저항 (68.1Ω, #4) 꽂기**:
-   - 한쪽 다리 ➡️ **21c** 구멍
-   - 다른쪽 다리 ➡️ **22c** 구멍
-   > 💡 **저항 가변(Hot-Swap) 측정 범위 조절**: 이미 **[BOM #17] Female Header(소켓)**을 21c와 22c에 납땜해 두셨으므로, 측정 대상에 따라 핀셋으로 저항을 손쉽게 갈아 끼우며(플러그 앤 플레이) 범위를 조절할 수 있습니다.
-   > - **[BOM #4] 68.1Ω 장착 시 (약 1mA)**: 권장 측정 범위 **~10 kΩ/□ 이하**. (ITO 박막 등 저저항 샘플)
-   > - **[BOM #5] 681Ω 장착 시 (약 100µA)**: 권장 측정 범위 **1 kΩ/□ ~ 100 kΩ/□**. (PEDOT:PSS 등 고저항 샘플)
-   > *(ADC의 최대 측정 한계 및 LM334의 Dropout 전압 여유분(약 2.2V)을 고려한 안전 측정 범위입니다.)*
-3. **100Ω Shunt 저항 (#6) 꽂기**:
-   - 한쪽 다리 ➡️ **22d** 구멍
-   - 다른쪽 다리 ➡️ **23d** 구멍
+1. **Insert LM334 (#3)**:
+   - Pin 1 (V+) ➡️ Hole **20b**
+   - Pin 2 (R)  ➡️ Hole **21b**
+   - Pin 3 (V-) ➡️ Hole **22b**
+2. **Insert Rset Resistor (68.1Ω, #4)**:
+   - Leg 1 ➡️ Hole **21c**
+   - Leg 2 ➡️ Hole **22c**
+   > 💡 **Variable Measurement Range (Hot-Swap)**: Since you've already soldered a **[BOM #17] Female Header** into 21c and 22c, you can easily use tweezers to swap resistors (plug and play) according to the target material.
+   > - **With [BOM #4] 68.1Ω (approx. 1mA)**: Rec. Range **~10 kΩ/sq or lower**. (Low resistance like ITO films)
+   > - **With [BOM #5] 681Ω (approx. 100µA)**: Rec. Range **1 kΩ/sq ~ 100 kΩ/sq**. (High resistance like PEDOT:PSS)
+   > *(This is a safe operating range calculated considering the ADC limit and the LM334's ~2.2V dropout voltage headroom.)*
+3. **Insert 100Ω Shunt (#6)**:
+   - Leg 1 ➡️ Hole **22d**
+   - Leg 2 ➡️ Hole **23d**
 
-*(※ 위와 같이 꽂으면 부품들이 세로로 나란히 아주 예쁘게 정렬됩니다.)*
+*(※ Inserted this way, the components will align vertically in a very neat column.)*
 
-### 4.3 점퍼선 배선 (전원 및 센싱)
+### 4.3 Jumper Wiring (Power & Sensing)
 
-전원 끌어오기 문제는 유저분의 기발한 **"행 3 중앙 브릿지"** 아이디어로 완벽하게 해결되었습니다!
+The power routing issue was beautifully solved using the user's **"Row 3 Center Bridge"** idea!
 
-1. **LM334 전원 끌어오기 (완료됨)**:
-   - 중앙 갭을 넘어 **3f ↔ 3e** 브릿지 점퍼 연결.
-   - 부족한 자리를 확보하기 위해 기존 AVDD 핀을 **3d**로 이동.
-   - 최종적으로 하단에 전기를 내리기 위해 **3a ↔ 20a** 로 긴 점퍼 연결. (LM334의 20b 핀에 깨끗한 3.3V 공급 완료)
-2. **ADS1220 전류 모니터링선 2가닥 연결 (이제 하실 일!)**:
-   - 이제 정전류원에서 흐르는 진짜 전류를 측정하기 위해 ADC로 두 가닥만 올리면 됩니다.
-   - **센싱 선 1 (파란색 추천 🔵)**: **행 21** (21e 등 빈 구멍) ➡️ 윗동네 **행 10 (반드시 d열 쪽에!)** 꽂아 납땜 (AIN2 / 보드상 `IN2` 연결)
-   - **센싱 선 2 (초록색 추천 🟢)**: **행 22** (22e 등 빈 구멍) ➡️ 윗동네 **행 11 (반드시 d열 쪽에!)** 꽂아 납땜 (AIN3 / 보드상 `IN3` 연결)
-   - *(※ 모듈 겉면에 적힌 `IN2`, `IN3`가 데이터시트의 `AIN2`, `AIN3` (Analog Input)와 완벽히 같은 핀입니다!)*
-   - > 🚨 **매우 중요**: 행 10과 행 11의 반대편(h열 쪽)은 노란색(SCLK), 주황색(DIN) SPI 통신선입니다. 절대 그쪽과 닿거나 섞이면 안 됩니다! 센싱선은 반드시 **아래쪽 d열 방향(아날로그 핀 쪽)**에 꽂으셔야 합니다.
+1. **Routing Power to LM334 (Completed)**:
+   - Bridge Jumper across the gap **3f ↔ 3e**.
+   - Relocated the old AVDD pin to **3d** to free up space.
+   - Long Jumper **3a ↔ 20a** drops the power down. (Clean 3.3V successfully delivered to LM334 Pin 20b.)
+2. **Connecting ADS1220 Current Monitor Lines (Your Next Task!)**:
+   - Now, to actually measure the true current flowing from the source, we run two wires up to the ADC.
+   - **Sense Wire 1 (Blue Rec 🔵)**: Drop in **Row 21** (e.g., hole 21e) ➡️ Run up and solder into **Row 10 (MUST be on the 'd' col side!)** (Connects mapping AIN2 / `IN2`)
+   - **Sense Wire 2 (Green Rec 🟢)**: Drop in **Row 22** (e.g., hole 22e) ➡️ Run up and solder into **Row 11 (MUST be on the 'd' col side!)** (Connects mapping AIN3 / `IN3`)
+   - *(※ The `IN2` and `IN3` labels on the module match perfectly with the `AIN2` and `AIN3` (Analog Input) pins from the datasheet!)*
+   - > 🚨 **CRITICAL**: The opposite 'h' column side of Rows 10 and 11 contains the Yellow (SCLK) and Orange (DIN) SPI digital comm lines. These must NEVER touch or mix! The sensing lines must strictly be soldered on the **lower 'd' column side (Analog pin side)**.
 
-### 🧪 4.4 1차 테스터기 검증 (필수)
-아직 아두이노 전원을 넣기 전에, 납땜이 잘 됐는지 테스터기로 찍어봅니다!
+### 🧪 4.4 1st Stage Multimeter Verification (Mandatory)
+Before powering on the Arduino, use a multimeter to check the solder joints!
 
-1. 멀티미터를 Ω(저항) 모드로 둡니다.
-2. 테스터기 팁 두 개로 **행 21**과 **행 22**의 은색 납땜 부위를 콕 찍어봅니다.
-   - ➡️ 화면에 **약 68.1Ω** (67.5 ~ 68.5) 근처가 나오면 성공!
-3. 이번엔 테스터기 팁으로 **행 22**와 **행 23**을 찍어봅니다.
-   - ➡️ 화면에 **약 100Ω** (99.5 ~ 100.5) 근처가 나오면 성공!
-
----
-
-## ♟️ 조립 진행: Step 5 - BAT54 입력 보호 회로 (Board B 최종 마무리)
-
-아날로그 기판(Board B)의 스페이스(행 25~31)가 텅 비었으므로, 이곳에 프로브에서 들어오는 미세 전압(`V+`, `V-`)이 ADC로 가기 전 과전압을 막아줄 듀얼 클램핑 제너 보호 회로를 올립니다. 
-유저분의 아이디어인 **BAT54A(Common Anode) + BAT54C(Common Cathode)** 조합을 사용해 완벽한 보호막을 만듭니다.
-
-### 5.1 필수 브릿지 (중앙 갭 연결)
-기판 좌측(a~e) 구역에서도 정화된 전원(행 1, 행 3)을 쓰기 위해 브릿지를 연결합니다.
-- **[3.3V_A 브릿지]**: `3e` ↔ `3f` 점퍼 연결 (이미 하셨을 겁니다)
-- **[AGND 브릿지]**: `1e` ↔ `1f` 점퍼 연결 (새로 추가!)
-
-### 5.2 부품 꽂기 (SOT-23 모듈 2개)
-모듈을 보드 우측(f~j열)에 지그재그 모양으로 꽂고 전원을 연결합니다.
-
-1. **BAT54A 꽂기 (`행 25~27 구역`)**:
-   - `27f`: 핀 1 (Cathode 1) ➡️ [이곳이 미래의 **V+ 채널**이 됩니다]
-   - `25f`: 핀 2 (Cathode 2) ➡️ [이곳이 미래의 **V- 채널**이 됩니다]
-   - `26e`: 핀 3 (Common Anode) ➡️ **`1d` (정화된 AGND)** 로 점퍼 연결!
-
-2. **BAT54C 꽂기 (`행 29~31 구역`)**:
-   - `31f`: 핀 1 (Anode 1) ➡️ [위 27f와 연결될 V+ 짝꿍]
-   - `29f`: 핀 2 (Anode 2) ➡️ [위 25f와 연결될 V- 짝꿍]
-   - `30c`: 핀 3 (Common Cathode) ➡️ **`3c` (정화된 3.3V_A)** 로 점퍼 연결!
-
-### 5.3 완벽한 1kΩ 전용 입력 터미널 만들기 (행 35, 37 활용)
-> 🌟 **[Full-Board 레이아웃 최적화]** 보드의 우측 하단 빈 공간(행 35~37)을 오직 프로브 입력과 1kΩ 방어막만을 위한 독립된 터미널 구역으로 만듭니다.
-
-- **[V- 채널 방어선 (행 35)]**:
-  1. 외부 주황색(V-) 프로브 심선을 **`35a`** 에 꽂습니다 (미래).
-  2. **1kΩ 저항** 양쪽 다리를 **`35c` 와 `35i`** 에 꽂아 중앙 갭을 훌쩍 건너뛰게 납땜합니다.
-  3. 걸러진 안전한 전압을 다이오드 채널로 보내기 위해 **`35j` ↔ `25j`** 수직 점퍼를 연결합니다.
-- **[V+ 채널 방어선 (행 37)]**:
-  1. 외부 보라색(V+) 프로브 심선을 **`37a`** 에 꽂습니다 (미래).
-  2. **1kΩ 저항** 양쪽 다리를 **`37c` 와 `37i`** 에 꽂아 중앙 갭을 건너뛰게 납땜합니다.
-  3. 걸러진 안전한 전압을 다이오드 채널로 보내기 위해 **`37j` ↔ `27j`** 수직 점퍼를 연결합니다.
-
-### 5.4 다이오드 짝꿍 묶기 및 ADC로 전송
-위쪽의 다이오드 구역(행 25~31)에서 최종적으로 안전해진 전압을 묶어 ADC로 등반시킵니다.
-
-- **[다이오드 브릿지 묶기]**: `31g` ↔ `27g` (V+ 쌍), `29g` ↔ `25g` (V- 쌍) 점퍼 연결
-- **[거꾸로 ADC 핀으로 전송]**: 우측의 보호 완료된 단자 **`27h`** ➡️ 윗동네 좌측 **`8b` (AIN0)** 긴 점퍼, 단자 **`25h`** ➡️ 윗동네 좌측 **`9b` (AIN1)** 긴 점퍼
-
-> 🎉 **이로써 3.3V 아날로그 베이스 보드(Board B)의 모든 납땜이 100% 완료되었습니다!** 
-> 나중에 외부 프로브의 은색 쉴드선들을 접지할 전용 공간도 하나 만들어두시면 좋습니다.
-> - **[쉴드 전용 구역 (예: 행 36)]**: 좌측의 AGND(행 1 파란줄이나 1d 등)에서 **`36c`** 등으로 점퍼를 하나 길게 뺍니다. 나중에 V+ 쉴드와 V- 쉴드를 꼬아서 **`36a` 나 `36b`** 에 꽂으시면 노이즈가 기판을 타지 않고 바로 땅으로 꺼집니다!
+1. Set Multimeter to Ω (Resistance) mode.
+2. Touch the two probes to the silver solder joints of **Row 21** and **Row 22**.
+   - ➡️ Screen shows around **~68.1Ω** (67.5 ~ 68.5) = Success!
+3. Now, probe **Row 22** and **Row 23**.
+   - ➡️ Screen shows around **~100Ω** (99.5 ~ 100.5) = Success!
 
 ---
 
-## ♟️ 조립 진행: Step 6 - DPDT 릴레이 구동 회로 (독립형 기판 분리!)
+## ♟️ Assembly Progress: Step 5 - BAT54 Input Protection (Board B Finalization)
 
-> 🌟 **[새로운 아키텍처 적용]** 노이즈 차단과 시스템 안정성을 극대화하기 위해, 여기서부터는 기존 아날로그 보드(빵판)를 쓰지 않고 **완전히 새로운 빵판이나 만능기판(Board C: 12V 스위칭 보드)**에 독립적으로 조립합니다!
+Since the analog board's (Board B) space from Rows 25~31 is empty, we build a dual-clamping Zener protection circuit here to clamp any over-voltages coming from the probe's micro-voltages (`V+`, `V-`) before they hit the delicate ADC.
+We create an invincible shield utilizing the user's combination idea: **BAT54A(Common Anode) + BAT54C(Common Cathode)**.
 
-정전류원(1mA)을 샘플의 I+ 와 I- 방향으로 앞뒤로 바꿔치기(Reversal) 하기 위한 12V 릴레이 스위칭 회로입니다. 아두이노의 약한 3.3V 디지털 신호로 12V 릴레이를 껐다 켰다 하기 위해 **PN2222A 트랜지스터**를 사용합니다.
+### 5.1 Essential Bridges (Crossing the Center Gap)
+To utilize the purified power (Rows 1 and 3) on the left side (a~e) of the board, add bridge jumpers.
+- **[3.3V_A Bridge]**: Jumper `3e` ↔ `3f` (Likely already done)
+- **[AGND Bridge]**: Jumper `1e` ↔ `1f` (New addition!)
 
-### 6.0 준비물
-1. **[BOM #7] DPDT 릴레이 (12V)** (Panasonic TX2-12V / 255-1002-5-ND)
-2. **[BOM #8] PN2222A 트랜지스터** (NPN, TO-92 패키지)
-3. **[BOM #9] 1N4148 다이오드** (유리관 형태, 검은 띠가 Cathode)
-4. **[BOM #10] 1kΩ 저항 2개** (베이스 보호용 및 풀다운용)
-5. **[BOM #14, #15] 12V SMPS 어댑터 (파워 서플라이)** (독립된 새 전원 소스)
-6. **[BOM #25] DC 배럴 잭 (Panel Mount)** (외부 전원 커넥터)
-7. **[BOM #26, #27] 인라인 퓨즈 홀더 및 5A 퓨즈** (안전 및 화재 방지 필수품)
+### 5.2 Component Insertion (SOT-23 Modules)
+Insert the two modules into the right side (f~j) in a zig-zag pattern and hook up power.
 
-### 6.1 독립 보드(Board C) 부품 꽂기 순서
+1. **Insert BAT54A (`Rows 25~27 Area`)**:
+   - `27f`: Pin 1 (Cathode 1) ➡️ [Future **V+ Channel**]
+   - `25f`: Pin 2 (Cathode 2) ➡️ [Future **V- Channel**]
+   - `26e`: Pin 3 (Common Anode) ➡️ Jumper to **`1d` (Purified AGND)**!
 
-아무 빵판이나 꺼내셔서 아래 원리대로만 배선하시면 됩니다. (행 번호는 예시이며 자유롭게 배치하세요.)
+2. **Insert BAT54C (`Rows 29~31 Area`)**:
+   - `31f`: Pin 1 (Anode 1) ➡️ [Partner for V+ at 27f]
+   - `29f`: Pin 2 (Anode 2) ➡️ [Partner for V- at 25f]
+   - `30c`: Pin 3 (Common Cathode) ➡️ Jumper to **`3c` (Purified 3.3V_A)**!
 
-1. **PN2222A 트랜지스터 배치**:
-   - 평평한 면이 나를 볼 때 왼쪽부터 **E, B, C** 핀입니다.
-2. **1N4148 플라이백 다이오드 연결**:
-   - 릴레이의 코일(Coil) 두 핀 사이에 다이오드를 병렬로 달아줍니다.
-   - ⚠️ **방향 주의**: 다이오드의 **검은 띠(Cathode)**가 12V(+) 전원 쪽에 연결되도록, 띠 없는 쪽(Anode)이 트랜지스터의 C(Collector) 쪽에 연결되도록 달아줍니다.
-3. **저항 2개 (1kΩ) 연결**:
-   - **베이스 저항**: 아두이노에서 올 제어 신호선 ➡️ 1kΩ 저항 ➡️ 트랜지스터의 B(Base) 핀 연결.
-   - **풀다운 저항**: 트랜지스터의 B(Base) 핀 ➡️ 1kΩ 저항 ➡️ 12V 그라운드(GND) 연결.
-4. **트랜지스터 전원/접지**:
-   - 트랜지스터의 E(Emitter) 핀 ➡️ 12V 그라운드(GND) 연결.
-   - 트랜지스터의 C(Collector) 핀 ➡️ 다이오드(Anode) 및 릴레이 코일의 한쪽 핀과 연결.
-5. **릴레이 전원**:
-   - 다이오드의 검은 띠(Cathode) 쪽 코일 핀 ➡️ 12V(+) 외부 전원에 연결.
+### 5.3 Creating the Perfect 1kΩ Input Terminals (Using Rows 35, 37)
+> 🌟 **[Full-Board Layout Optimization]** The empty bottom-right space (Rows 35~37) becomes a dedicated terminal zone solely for probe sensing input and the 1kΩ defensive line.
 
-### 6.2 💎 3-Board 핵심 인터페이스 배선 (가장 중요)
+- **[V- Channel Defense Line (Row 35)]**:
+  1. Insert external Orange (V-) probe wire down into **`35a`** (Later).
+  2. Jumper the **1kΩ resistor** across the center gap, dropping legs into **`35c` and `35i`**.
+  3. Send the filtered, safe voltage up to the diode channel via vertical jumper **`35j` ↔ `25j`**.
+- **[V+ Channel Defense Line (Row 37)]**:
+  1. Insert external Purple (V+) probe wire down into **`37a`** (Later).
+  2. Jumper the **1kΩ resistor** across the center gap, dropping legs into **`37c` and `37i`**.
+  3. Send the filtered, safe voltage up to the diode channel via vertical jumper **`37j` ↔ `27j`**.
 
-모두 따로 노는 세 개의 보드를 연결하는 "생명선" 3가닥입니다.
+### 5.4 Binding Diode Pairs and Sending to ADC
+Finally, we bind the now-safe voltages from the diode zone (Rows 25~31) and pipe them up to the ADC.
 
-1. **[공통 접지 / Common GND]**:
-   - Board A(아두이노)의 GND ➡️ Board C(새 릴레이 보드)의 12V GND 레일과 **반드시** 한 가닥으로 이어줍니다.
-2. **[제어 신호 / Control Signal]**:
-   - Board A(아두이노)의 제어 핀(가령 `D8`) ➡️ Board C의 베이스 1kΩ 저항 끝단.
-3. **[1mA 전류 공급 / Current Supply]**:
-   - Board B(아까 쓰던 아날로그 보드)의 "행 23번 (100Ω 끝단, S_COM)" ➡️ Board C 릴레이 본체의 **COM A 핀**으로 길게 점퍼 연결.
+- **[Bind Diode Bridges]**: Jumper `31g` ↔ `27g` (V+ Pair), `29g` ↔ `25g` (V- Pair)
+- **[Pipe to ADC]**: Long jumper from protected terminal **`27h`** ➡️ Up-left to **`8b` (AIN0)**. Long jumper from terminal **`25h`** ➡️ Up-left to **`9b` (AIN1)**.
+
+> 🎉 **With this, 100% of the soldering for the 3.3V Analog Base Board (Board B) is complete!** 
+> It is highly recommended to designate one extra zone to ground the silver shield wires from the external probe later.
+> - **[Dedicated Shield Zone (e.g., Row 36)]**: Run one long jumper from the left AGND (Row 1 Blue or 1d) to **`36c`**. Later, twist the V+ and V- shield wires together and plug them into **`36a` or `36b`**, routing noise immediately into the ground away from the board!
 
 ---
 
-## ♟️ 조립 진행: Step 7 - 4-Point Probe 헤드 최종 연결 (마무리)
+## ♟️ Assembly Progress: Step 6 - DPDT Relay Drive Circuit (Independent Board!)
 
-모든 회로와 패널 조립이 끝났다면, 마지막으로 실제 **Signatone 4-Point Probe 헤드의 바나나 플러그(또는 터미널 단자)를 패널에 직접 체결**합니다.
+> 🌟 **[New Architecture Deployed]** To maximize noise isolation and system stability, from here on out we abandon the old analog breadboard and assemble independently on a **completely new breadboard or perfboard (Board C: 12V Switching Board)**!
 
-### 7.1 4-Point Probe 핀 배열 확인
-Signatone 프로브 헤드(특히 SP4 계열)의 4개 핀은 일렬로 배열되어 있습니다. (왼쪽부터 1, 2, 3, 4번 핀)
-표준 결선법에 따라 다음과 같이 연결해야 합니다.
+This is a 12V Relay switching circuit designed to swap the direction of the 1mA constant current source back and forth (Reversal) into the sample's I+ and I- terminals. We utilize a **PN2222A Transistor** so the weak 3.3V digital signal from the Arduino can reliably flick the beefy 12V relay on and off.
 
-*   **핀 1 (가장 바깥쪽)** ➡️ **I+ (전류 양극, 빨간색 포스트)**
-*   **핀 2 (중간)** ➡️ **V+ (전압 양극, 파란색 포스트)**
-*   **핀 3 (중간)** ➡️ **V- (전압 음극, 초록색 포스트)**
-*   **핀 4 (가장 바깥쪽)** ➡️ **I- (전류 음극, 검정색 포스트)**
+### 6.0 Prep List
+1. **[BOM #7] DPDT Relay (12V)** (Panasonic TX2-12V / 255-1002-5-ND)
+2. **[BOM #8] PN2222A Transistor** (NPN, TO-92 Package)
+3. **[BOM #9] 1N4148 Diode** (Glass tube type, Black stripe is Cathode)
+4. **[BOM #10] 1kΩ Resistor x 2** (Base protection and pull-down)
+5. **[BOM #14, #15] 12V SMPS Wall Adapter** (Isolated fresh power source)
+6. **[BOM #25] DC Barrel Jack (Panel Mount)** (External power connector)
+7. **[BOM #26, #27] Inline blade fuse holder & 5A fuse** (Mandatory safety and fire prevention)
 
-*(만약 프로브 케이블의 색상이 다르다면 데이터시트나 테스터기의 도통 모드로 각 팁과 케이블 끝단을 찍어 확인하세요.)*
+### 6.1 Independent Board (Board C) Insertion Sequence
 
-### 7.2 바인딩 포스트 체결법
-1. 패널에 장착된 바인딩 포스트의 너트(나사머리)를 왼쪽으로 완전히 풉니다.
-2. 너트 안쪽에 뚫린 가로 구멍(십자 홀)에 프로브 케이블의 터미널 단자 핀(또는 피복을 벗긴 전선)을 깊숙이 끼워 넣습니다.
-   *(바나나 플러그 타입이라면 나사를 조일 필요 없이 정면의 구멍에 그냥 꾹 꽂아주면 됩니다.)*
-3. 나사를 오른쪽으로 꽉 조여 흔들리지 않게 고정합니다. 이 결합이 헐거우면 수시로 저항값이 튀는 원인이 됩니다.
+Grab any breadboard and wire exactly according to these principles. (Row numbers are arbitrary, place freely.)
 
-> 🎉 **하드웨어 및 배선 제작 완료!** 이제 측정 샘플을 준비하고 아두이노에 코드를 올려 실측을 시작하세요! 전기적, 물리적으로 가장 이상적이고 정밀한 하드웨어 측정이 가능해졌습니다.
+1. **Place PN2222A Transistor**:
+   - Looking face-on at the flat side, pins from left to right are **E, B, C**.
+2. **Connect 1N4148 Flyback Diode**:
+   - Wire the diode in parallel across the two Relay Coil pins.
+   - ⚠️ **Direction Check**: The diode's **Black Stripe (Cathode)** MUST connect to the 12V(+) power side. The stripeless side (Anode) connects to the Transistor's C (Collector).
+3. **Connect Two 1kΩ Resistors**:
+   - **Base Resistor**: Arduino Control Signal ➡️ 1kΩ Resistor ➡️ Transistor B (Base) pin.
+   - **Pull-down Resistor**: Transistor B (Base) pin ➡️ 1kΩ Resistor ➡️ 12V Ground (GND).
+4. **Transistor Power/Ground**:
+   - Transistor E (Emitter) pin ➡️ 12V Ground (GND).
+   - Transistor C (Collector) pin ➡️ Diode (Anode) and one side of the Relay Coil.
+5. **Relay Power**:
+   - Diode Black Stripe (Cathode) side Coil pin ➡️ External 12V(+) Power Source.
+
+### 6.2 💎 3-Board Core Interface Wiring (Crucial)
+
+These are the 3 "lifeline" wires linking all three independently functioning boards.
+
+1. **[Common GND]**:
+   - Board A (Arduino) GND ➡️ **MUST** be inextricably tied via a single wire to Board C (Relay Board)'s 12V GND rail.
+2. **[Control Signal]**:
+   - Board A (Arduino) Control Pin (e.g., `D8`) ➡️ Tip of Board C's 1kΩ Base resistor.
+3. **[1mA Current Supply]**:
+   - Board B (Analog Board)'s "Row 23 (End of 100Ω, S_COM)" ➡️ Long jumper connecting directly to the **COM A pin** on the Relay body on Board C.
+
+---
+
+## ♟️ Assembly Progress: Step 7 - 4-Point Probe Final Connection 
+
+Once all circuits and panel assembly are finished, final step is directly terminating the actual **Signatone 4-Point Probe Head's banana plugs (or terminal wires) to the panel**.
+
+### 7.1 Verify 4-Point Probe Pin Arrangement
+The 4 pins of a Signatone probe head (especially SP4 series) are arranged linearly. (Pins 1, 2, 3, 4 from the left). Following standard wiring norms:
+
+*   **Pin 1 (Outer edge)** ➡️ **I+ (Current Positive, Red Post)**
+*   **Pin 2 (Inner)** ➡️ **V+ (Voltage Positive, Blue Post)**
+*   **Pin 3 (Inner)** ➡️ **V- (Voltage Negative, Green Post)**
+*   **Pin 4 (Outer edge)** ➡️ **I- (Current Negative, Black Post)**
+
+*(If your specific probe cable colors differ, absolutely verify which tip matches which cable end using a multimeter's continuity mode.)*
+
+### 7.2 Binding Post Connection Method
+1. Fully loosen the nuts (screw heads) of the binding posts mounted on the panel by turning them counter-clockwise.
+2. Insert the probe cable's terminal pin (or bare stripped wire) deeply into the lateral cross-hole exposed in the metal post shaft.
+   *(If using Banana Plugs, ignore the screw entirely and just firmly stab the plug directly into the hole on the front face of the post.)*
+3. Twist the nut tightly clockwise to secure. If this connection is loose or flimsy, it is the #1 cause of wildly jumping resistance values.
+
+> 🎉 **Hardware and Wiring Assembly Complete!** Now prepare your sample, upload the code to your Arduino, and commence real-world measurements! You now possess a setup capable of the most ideal and highly precise electrical hardware measurements.
