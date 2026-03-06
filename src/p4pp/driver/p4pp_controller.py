@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+from typing import Optional
 from collections import deque
 from .protocol import Command, Response, State
 from .arduino_serial import ArduinoSerial
@@ -42,8 +43,8 @@ class P4PPController:
         self.has_homed_rot = False
         self.pos_lin = 0
         self.pos_rot = 0
-        self.target_lin: int | None = None
-        self.target_rot: int | None = None
+        self.target_lin: Optional[int] = None
+        self.target_rot: Optional[int] = None
         self.active_task = None
         self._recent_lines = deque(maxlen=500)
         self._last_pos_line = None

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="p4pp",
     version="1.0.0",
-    description="P4PP Controller GUI and Driver",
+    description="P4PP GUI and Driver",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[

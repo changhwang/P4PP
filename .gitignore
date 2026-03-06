@@ -17,6 +17,7 @@ venv/
 
 # Temp or build files
 build/
+dist/
 output/
 tmp/
 
