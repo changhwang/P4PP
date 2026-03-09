@@ -74,9 +74,11 @@ class P4PPController:
             line = self.hw.get_line()
             self._process_line(line)
 
-        # Keep position view fresh while idle.
+        # Real firmware does not stream position updates while a move is in flight,
+        # so poll position during motion to detect arrival at the target.
         now = time.monotonic()
-        if self.state == State.IDLE and (now - self._last_pos_query_at) > 0.5:
+        poll_interval = 0.2 if self.state == State.MOVING else 0.5
+        if self.state in (State.IDLE, State.MOVING, State.HOMING) and (now - self._last_pos_query_at) > poll_interval:
             self.hw.send_command(Command.GET_POS)
             self._last_pos_query_at = now
 
