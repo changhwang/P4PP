@@ -2,6 +2,7 @@ import csv
 import logging
 import os
 import re
+import sys
 from datetime import datetime
 
 import customtkinter as ctk
@@ -17,7 +18,10 @@ from src.p4pp.gui.components.status_panel import StatusPanel
 
 logger = logging.getLogger(__name__)
 
-_ASSETS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets")
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    _ASSETS_DIR = os.path.join(sys._MEIPASS, "assets")
+else:
+    _ASSETS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets"))
 LIGHT_MODE = "Light"
 DARK_MODE = "Dark"
 THEME_PALETTES = {
@@ -91,7 +95,10 @@ class P4PPApp(ctk.CTk):
         except Exception:
             pass
         if os.path.exists(ico_path):
-            self.iconbitmap(ico_path)
+            try:
+                self.iconbitmap(ico_path)
+            except Exception as exc:
+                logger.warning("Failed to apply .ico window icon: %s", exc)
         if os.path.exists(png_path):
             from PIL import ImageTk
 

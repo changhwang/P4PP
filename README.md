@@ -78,9 +78,10 @@ Important:
 - Build with `main.py` as entry script.
 - Use the provided `P4PP.spec`.
 
-### Build instability on older Python environments
+### Build instability on mixed Python environments
 
-- Build using Python 3.12 virtual environment.
+- Build using a clean Python 3.11 virtual environment.
+- Clear `PYTHONPATH` before packaging to avoid external site-package contamination.
 
 ---
 
@@ -103,7 +104,7 @@ P4PP/
 ### Local Run
 
 ```powershell
-py -3.12 -m venv venv
+py -3.11 -m venv venv
 .\venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -e .
@@ -113,10 +114,11 @@ python main.py
 ### Build
 
 ```powershell
-py -3.12 -m venv build_venv
+py -3.11 -m venv build_venv
 .\build_venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install pyserial customtkinter matplotlib Pillow pyinstaller
+$env:PYTHONPATH = ""
 python -m PyInstaller --noconfirm --clean P4PP.spec
 ```
 
