@@ -33,6 +33,10 @@ Important:
 - Keep the extracted `P4PP` folder structure as-is.
 - Do not move `P4PP.exe` outside the `P4PP` folder.
 
+## App Screenshot
+
+![P4PP main window screenshot](assets/app_screenshot.png)
+
 ## Highlights
 
 - Live GUI for connect/home/move/measure workflow
