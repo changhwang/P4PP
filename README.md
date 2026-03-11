@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <img src="assets/icon.png" alt="P4PP Logo" width="140" />
   <h1>P4PP</h1>
   <p><b>Precision 4-Point Probe Controller</b></p>
@@ -20,6 +20,19 @@ It provides:
 
 Target metric: **Sheet Resistance (Rs, Ohm/sq)**.
 
+## Quick Start (1 Minute)
+
+1. Download latest release: https://github.com/changhwang/P4PP/releases/latest
+2. In release assets, download `P4PP.zip`.
+3. Extract to a stable folder (example: `C:\Tools\P4PP`).
+4. Open extracted `P4PP` folder and run `P4PP.exe`.
+5. In the app, select `MOCK` and validate `Connect -> Home -> Measure`.
+
+Important:
+
+- Keep the extracted `P4PP` folder structure as-is.
+- Do not move `P4PP.exe` outside the `P4PP` folder.
+
 ## Highlights
 
 - Live GUI for connect/home/move/measure workflow
@@ -29,41 +42,27 @@ Target metric: **Sheet Resistance (Rs, Ohm/sq)**.
 - History CSV export
 - Explicit controller state handling
 
-## Install (Recommended)
+## Hardware Bring-Up (Real Device)
 
-Use prebuilt binaries from **GitHub Releases**.
+Before using real hardware:
 
-1. Open the repository Releases page.
-2. Download the latest `P4PP.zip`.
-3. Extract it to a folder (example: `C:\Tools\P4PP`).
-4. Run `P4PP.exe` from inside the extracted `P4PP` folder.
+1. Flash firmware: `firmware/p4pp_firmware/p4pp_firmware.ino`
+2. Confirm COM port in Windows Device Manager.
+3. Complete wiring and calibration checks in docs below.
 
-Important:
+Read docs in this order:
 
-- Keep the `P4PP` folder structure as-is.
-- Do not move `P4PP.exe` outside that folder.
+1. [4PP Master Guide](docs/4pp_master_guide.md)
+2. [Analog Wiring Guide](docs/analog_wiring_guide.md)
+3. [Movement Implementation Guide](docs/movement_implementation_guide.md)
+4. [App Architecture](docs/app_architecture.md)
 
-## Hardware Prerequisites
+## First Real Measurement Checklist
 
-- Flash Arduino firmware:
-  - `firmware/p4pp_firmware/p4pp_firmware.ino`
-- Confirm serial COM port is visible in Device Manager.
-- Complete wiring and bring-up using the docs below.
-
-## Setup Docs (Read in Order)
-
-1. `docs/4pp_master_guide.md`
-2. `docs/analog_wiring_guide.md`
-3. `docs/movement_implementation_guide.md`
-4. `docs/app_architecture.md`
-
-## First Run Workflow
-
-1. Launch app.
-2. Select `MOCK` and test connect/home/move/measure.
-3. Verify graph + CSV output behavior.
-4. Switch to real COM port and connect hardware.
-5. Run a low-risk test measurement.
+1. Pass full `MOCK` workflow first.
+2. Switch to real COM port and connect.
+3. Run one low-risk test sample.
+4. Confirm graph updates and CSV output in `data/`.
 
 ## Troubleshooting
 
@@ -72,6 +71,11 @@ Important:
 - Recheck COM port in Device Manager.
 - Ensure no other application is holding the port.
 - Re-test with `MOCK` mode first.
+
+### App does not start (`ModuleNotFoundError: tkinter`)
+
+- Use the official release package (`P4PP.zip`) from Releases.
+- If you built locally, use Python 3.11 and rebuild with `P4PP.spec`.
 
 ### Build/runtime metadata error (`PackageNotFoundError: p4pp`)
 
@@ -91,14 +95,14 @@ Important:
 
 ```text
 P4PP/
-├─ assets/               # logo/icons
-├─ data/                 # measurement outputs
-├─ docs/                 # English docs
-├─ firmware/             # Arduino firmware
-├─ src/p4pp/             # application source
-├─ main.py               # app entry point
-├─ P4PP.spec             # PyInstaller spec
-└─ setup.py              # package metadata
+|- assets/               # logo/icons
+|- data/                 # measurement outputs
+|- docs/                 # English docs
+|- firmware/             # Arduino firmware
+|- src/p4pp/             # application source
+|- main.py               # app entry point
+|- P4PP.spec             # PyInstaller spec
+`- setup.py              # package metadata
 ```
 
 ### Local Run
