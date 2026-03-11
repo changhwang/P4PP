@@ -1,10 +1,9 @@
 import customtkinter as ctk
-from src.p4pp.driver import P4PPController, Command, State
+
+from src.p4pp.driver import Command, P4PPController, State
 
 
 class StatusPanel(ctk.CTkFrame):
-    """Compact status panel designed for the top bar layout."""
-
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
 
@@ -13,26 +12,19 @@ class StatusPanel(ctk.CTkFrame):
         self.grid_columnconfigure(2, weight=0)
         self.grid_columnconfigure(3, weight=1)
 
-        # Subsystem status indicators (compact inline with text)
         indicator_frame = ctk.CTkFrame(self, fg_color="transparent")
         indicator_frame.grid(row=0, column=0, padx=(0, 8), sticky="w")
+        self.indicator_labels = []
         self.dot_lin, self.txt_lin = self._make_indicator(indicator_frame, "LIN", row=0, col=0)
         self.dot_rot, self.txt_rot = self._make_indicator(indicator_frame, "ROT", row=0, col=1)
         self.dot_meas, self.txt_meas = self._make_indicator(indicator_frame, "MEAS", row=0, col=2)
 
-        # Position label
-        self.lbl_pos = ctk.CTkLabel(
-            self,
-            text="LIN: 0.00mm | ROT: 0.00°",
-            font=ctk.CTkFont(size=12),
-            text_color="#A0A0A0",
-        )
+        self.lbl_pos = ctk.CTkLabel(self, text="LIN: 0.00mm | ROT: 0.00 deg", font=ctk.CTkFont(size=12))
         self.lbl_pos.grid(row=0, column=1, padx=(0, 12), sticky="w")
 
-        # Sheet Resistance result (large, right-aligned)
         self.lbl_result = ctk.CTkLabel(
             self,
-            text="--- Ω/sq",
+            text="--- Ohm/sq",
             font=ctk.CTkFont(size=28, weight="bold"),
             text_color="#2ECC71",
         )
@@ -43,7 +35,9 @@ class StatusPanel(ctk.CTkFrame):
     def _make_indicator(self, parent, label: str, row: int, col: int):
         frame = ctk.CTkFrame(parent, fg_color="transparent")
         frame.grid(row=row, column=col, padx=(0, 10))
-        ctk.CTkLabel(frame, text=label, font=ctk.CTkFont(size=11)).grid(row=0, column=0, padx=(0, 2))
+        lbl = ctk.CTkLabel(frame, text=label, font=ctk.CTkFont(size=11))
+        lbl.grid(row=0, column=0, padx=(0, 2))
+        self.indicator_labels.append(lbl)
         dot = ctk.CTkLabel(frame, text="●", font=ctk.CTkFont(size=11), text_color="#A31C2D")
         dot.grid(row=0, column=1, padx=(0, 2))
         txt = ctk.CTkLabel(frame, text="OFF", font=ctk.CTkFont(size=11, weight="bold"), text_color="#A31C2D")
@@ -56,7 +50,7 @@ class StatusPanel(ctk.CTkFrame):
             return "#2ECC71"
         if status_text in ("RUNNING", "HOMING", "MEASURING", "MOVING"):
             return "#F1C40F"
-        if status_text in ("CONNECTED",):
+        if status_text == "CONNECTED":
             return "#5DADE2"
         return "#A31C2D"
 
@@ -106,13 +100,18 @@ class StatusPanel(ctk.CTkFrame):
 
     def update_result(self, result: float, std: float = None):
         if result is None:
-            self.lbl_result.configure(text="--- Ω/sq")
+            self.lbl_result.configure(text="--- Ohm/sq")
         elif std is not None and std > 0:
-            self.lbl_result.configure(text=f"{result:.3f} ± {std:.3f} Ω/sq")
+            self.lbl_result.configure(text=f"{result:.3f} ± {std:.3f} Ohm/sq")
         else:
-            self.lbl_result.configure(text=f"{result:.3f} Ω/sq")
+            self.lbl_result.configure(text=f"{result:.3f} Ohm/sq")
 
     def update_position(self, pos_lin: int, pos_rot: int):
         lin_mm = P4PPController.lin_steps_to_mm(pos_lin)
         rot_deg = P4PPController.rot_steps_to_deg(pos_rot)
-        self.lbl_pos.configure(text=f"LIN: {lin_mm:.2f}mm | ROT: {rot_deg:.1f}°")
+        self.lbl_pos.configure(text=f"LIN: {lin_mm:.2f}mm | ROT: {rot_deg:.1f}deg")
+
+    def apply_theme(self, palette: dict):
+        self.lbl_pos.configure(text_color=palette["text_muted"])
+        for label in self.indicator_labels:
+            label.configure(text_color=palette["text_muted"])

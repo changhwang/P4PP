@@ -1,16 +1,18 @@
-import re
 import os
-import serial.tools.list_ports
-import customtkinter as ctk
+import re
 from tkinter import filedialog
+
+import customtkinter as ctk
+import serial.tools.list_ports
+
 from src.p4pp.driver import P4PPController
 
-_DEFAULT_SAVE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "data", "measurements"))
+_DEFAULT_SAVE_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "data", "measurements")
+)
 
 
 class ControlPanel(ctk.CTkFrame):
-    """Actuator-only control panel (connection section moved to top bar)."""
-
     def __init__(
         self,
         master,
@@ -36,29 +38,22 @@ class ControlPanel(ctk.CTkFrame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        # --- Action Buttons ---
         action_frame = ctk.CTkFrame(self, fg_color="transparent")
         action_frame.grid(row=0, column=0, padx=12, pady=(12, 6), sticky="ew")
         action_frame.grid_columnconfigure(0, weight=1)
         action_frame.grid_columnconfigure(1, weight=1)
 
-        self.btn_initialize = ctk.CTkButton(
-            action_frame, text="Initialize", height=40,
-            command=self.on_initialize, fg_color="#1F538D",
-        )
+        self.btn_initialize = ctk.CTkButton(action_frame, text="Initialize", height=40, command=self.on_initialize)
         self.btn_initialize.grid(row=0, column=0, padx=(0, 4), sticky="ew")
 
-        self.btn_measure = ctk.CTkButton(
-            action_frame, text="Measure", height=40,
-            command=self.on_measure, fg_color="#A31C2D", hover_color="#7A1321",
-        )
+        self.btn_measure = ctk.CTkButton(action_frame, text="Measure", height=40, command=self.on_measure)
         self.btn_measure.grid(row=0, column=1, padx=(4, 0), sticky="ew")
 
-        # --- Sample Name + Save Path ---
         sample_frame = ctk.CTkFrame(self, fg_color="transparent")
         sample_frame.grid(row=1, column=0, padx=12, pady=(4, 2), sticky="ew")
         sample_frame.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(sample_frame, text="Sample:", font=ctk.CTkFont(size=12)).grid(row=0, column=0, padx=(0, 4), sticky="w")
+        self.lbl_sample = ctk.CTkLabel(sample_frame, text="Sample:", font=ctk.CTkFont(size=12))
+        self.lbl_sample.grid(row=0, column=0, padx=(0, 4), sticky="w")
         self.sample_var = ctk.StringVar(value="untitled")
         self.entry_sample = ctk.CTkEntry(sample_frame, textvariable=self.sample_var, height=28)
         self.entry_sample.grid(row=0, column=1, sticky="ew")
@@ -67,26 +62,48 @@ class ControlPanel(ctk.CTkFrame):
         path_frame.grid(row=2, column=0, padx=12, pady=(2, 6), sticky="ew")
         path_frame.grid_columnconfigure(0, weight=1)
         self.save_dir = _DEFAULT_SAVE_DIR
-        self.lbl_save_path = ctk.CTkLabel(
-            path_frame, text=self._shorten_path(self.save_dir),
-            font=ctk.CTkFont(size=11), text_color="#9CB5D9", anchor="w",
-        )
+        self.lbl_save_path = ctk.CTkLabel(path_frame, text=self._shorten_path(self.save_dir), font=ctk.CTkFont(size=11), anchor="w")
         self.lbl_save_path.grid(row=0, column=0, sticky="ew")
-        self.btn_browse = ctk.CTkButton(
-            path_frame, text="📁", width=32, height=28, command=self._browse_save_dir,
-        )
+        self.btn_browse = ctk.CTkButton(path_frame, text="📁", width=32, height=28, command=self._browse_save_dir)
         self.btn_browse.grid(row=0, column=1, padx=(4, 0))
 
-        # --- Actuator Control ---
-        ctk.CTkLabel(
-            self, text="Actuator Control",
-            font=ctk.CTkFont(size=14, weight="bold"),
-        ).grid(row=3, column=0, padx=12, pady=(8, 4))
+        self.lbl_section = ctk.CTkLabel(self, text="Actuator Control", font=ctk.CTkFont(size=14, weight="bold"))
+        self.lbl_section.grid(row=3, column=0, padx=12, pady=(8, 4))
 
         self._build_linear_section(row=4)
         self._build_rotation_section(row=5)
 
-    # ------------------------------------------------------------------ Linear
+    def apply_theme(self, palette: dict):
+        self.configure(fg_color=palette["left_panel_bg"])
+        self._apply_theme_recursive(self, palette)
+        self.btn_initialize.configure(fg_color="#1F538D", hover_color="#163E6E", text_color="#F8FAFC")
+        self.btn_measure.configure(fg_color="#A31C2D", hover_color="#7A1321", text_color="#F8FAFC")
+        self.lbl_save_path.configure(text_color=palette["accent_info"])
+        self.lbl_lin_range.configure(text_color=palette["text_muted"])
+        self.lbl_rot_range.configure(text_color=palette["text_muted"])
+
+    def _apply_theme_recursive(self, widget, palette: dict):
+        for child in widget.winfo_children():
+            class_name = child.__class__.__name__
+            if class_name in {"CTkFrame", "CTkScrollableFrame"} and child.cget("fg_color") != "transparent":
+                child.configure(fg_color=palette["panel_card"])
+            elif class_name == "CTkLabel":
+                child.configure(text_color=palette["text"])
+            elif class_name == "CTkEntry":
+                child.configure(
+                    fg_color=palette["entry_bg"],
+                    border_color=palette["entry_border"],
+                    text_color=palette["text"],
+                    placeholder_text_color=palette["text_muted"],
+                )
+            elif class_name == "CTkButton" and child not in (self.btn_initialize, self.btn_measure):
+                child.configure(
+                    fg_color=palette["button_bg"],
+                    hover_color=palette["button_hover"],
+                    text_color=palette["button_text"],
+                )
+            self._apply_theme_recursive(child, palette)
+
     def _build_linear_section(self, row: int):
         frame = ctk.CTkFrame(self)
         frame.grid(row=row, column=0, padx=12, pady=4, sticky="ew")
@@ -118,12 +135,13 @@ class ControlPanel(ctk.CTkFrame):
         self.btn_lin_right.grid(row=0, column=2)
 
         lin_limit_mm = P4PPController.lin_steps_to_mm(P4PPController.LIN_MAX_STEPS)
-        ctk.CTkLabel(
-            frame, text=f"Range: 0 ~ {lin_limit_mm:.1f} mm  |  Sample: 46.0 mm",
-            text_color="#A0A0A0", font=ctk.CTkFont(size=11),
-        ).grid(row=3, column=0, padx=10, pady=(2, 8), sticky="w")
+        self.lbl_lin_range = ctk.CTkLabel(
+            frame,
+            text=f"Range: 0 ~ {lin_limit_mm:.1f} mm  |  Sample: 46.0 mm",
+            font=ctk.CTkFont(size=11),
+        )
+        self.lbl_lin_range.grid(row=3, column=0, padx=10, pady=(2, 8), sticky="w")
 
-    # --------------------------------------------------------------- Rotation
     def _build_rotation_section(self, row: int):
         frame = ctk.CTkFrame(self)
         frame.grid(row=row, column=0, padx=12, pady=4, sticky="ew")
@@ -155,12 +173,9 @@ class ControlPanel(ctk.CTkFrame):
         self.btn_rot_right.grid(row=0, column=2)
 
         rot_limit_deg = P4PPController.rot_steps_to_deg(P4PPController.ROT_MAX_STEPS)
-        ctk.CTkLabel(
-            frame, text=f"Range: 0 ~ {rot_limit_deg:.1f} deg",
-            text_color="#A0A0A0", font=ctk.CTkFont(size=11),
-        ).grid(row=3, column=0, padx=10, pady=(2, 8), sticky="w")
+        self.lbl_rot_range = ctk.CTkLabel(frame, text=f"Range: 0 ~ {rot_limit_deg:.1f} deg", font=ctk.CTkFont(size=11))
+        self.lbl_rot_range.grid(row=3, column=0, padx=10, pady=(2, 8), sticky="w")
 
-    # ---------------------------------------------------------------- Handlers
     def on_initialize(self):
         self.initialize_callback()
 
@@ -227,8 +242,7 @@ class ControlPanel(ctk.CTkFrame):
         return (1, port_name.upper())
 
     def refresh_ports(self):
-        """Called externally to refresh the port list in the top bar."""
-        pass  # Port combo is now in app.py top bar
+        pass
 
     def _browse_save_dir(self):
         chosen = filedialog.askdirectory(initialdir=self.save_dir, title="Select save folder")
