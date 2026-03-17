@@ -26,7 +26,7 @@ Target metric: **Sheet Resistance (Rs, Ohm/sq)**.
 2. In release assets, download `P4PP.zip`.
 3. Extract to a stable folder (example: `C:\Tools\P4PP`).
 4. Open extracted `P4PP` folder and run `P4PP.exe`.
-5. In the app, select `MOCK` and validate `Connect -> Home -> Measure`.
+5. In the app, keep the default `R_set = 681 ohm`, then select `MOCK` and validate `Connect -> Home -> Measure`.
 
 Important:
 
@@ -54,6 +54,11 @@ Before using real hardware:
 2. Confirm COM port in Windows Device Manager.
 3. Complete wiring and calibration checks in docs below.
 
+`R_set` guidance:
+
+- Default startup mode is `681 ohm` (`~0.1 mA`), which is the safer general-purpose option for initial bring-up.
+- Switch to `68.1 ohm` (`~1 mA`) for lower-resistance samples such as ITO when you need stronger signal.
+
 Read docs in this order:
 
 1. [4PP Master Guide](docs/4pp_master_guide.md)
@@ -80,6 +85,11 @@ Read docs in this order:
 
 - Use the official release package (`P4PP.zip`) from Releases.
 - If you built locally, use Python 3.11 and rebuild with `P4PP.spec`.
+
+### Measured result stays near `0.00`
+
+- Confirm the Arduino firmware is updated together with the PC app.
+- `681 ohm` mode is intended for higher-resistance samples; low-resistance films may require `68.1 ohm`.
 
 ### Build/runtime metadata error (`PackageNotFoundError: p4pp`)
 

@@ -71,7 +71,7 @@ The table below illustrates how components are placed across Rows (1~32) of the 
 | **18** | [Empty] | (Empty) | (Empty) | |
 | **19** | [Curr Src]| (Empty) | (Empty) | ⬇️ **LM334 Area** ⬇️ |
 | **20** | V+ | | **LM334(V+)** ➡️ Jumper to 3V3_A | LM334 Power |
-| **21** | R / Sh+ | ➡️ Jumper to Row 10(AIN2) | **LM334(R)**, **Rset(68.1Ω)**(↓) | Rset Network & Shunt+ |
+| **21** | R / Sh+ | -> Jumper to Row 10(AIN2) | **LM334(R)**, **Rset(681 ohm default / 68.1 ohm alt)** | Rset Network & Shunt+ |
 | **22** | OUT/Sh-| ➡️ Jumper to Row 11(AIN3) | **LM334(V-)**, **Rset**(↑), **100Ω**(↓) | Constant Curr Out & Shunt- |
 | **23** | S_COM | | **100Ω**(↑), **DPDT_COM_A**(Jumper wire) | Post 100Ω to Relay |
 | **24** | [Empty] | (Empty) | (Empty) | ⬇️ **Relay/12V (Isolated)** ⬇️|
@@ -218,18 +218,22 @@ Run long jumper wires from the 'h' column side directly to the **Arduino's digit
 
 ## ♟️ Assembly Progress: Step 4 - LM334 Constant Current Source
 
-Utilize the empty space beneath the ADS1220 (Rows 20~23) to assemble the 1mA Constant Current Source, the beating heart of resistance measurement.
+Utilize the empty space beneath the ADS1220 (Rows 20~23) to assemble the LM334 constant current source, the beating heart of resistance measurement. For the default build, start with **681 ohm Rset (~100 uA)** and swap to **68.1 ohm (~1 mA)** only for lower-resistance samples.
 
 ### 4.0 Preparation (Check BOM)
-Locate these exact three components before assembly.
+Locate these exact components before assembly.
 1. **[BOM #3] LM334Z/NOPB (Constant Current Source IC)**:
    - Black half-cylinder (TO-92 Package)
    - Marked `LM334Z`.
-2. **[BOM #4] 68.1Ω Resistor (0.1% Precision)**:
+2. **[BOM #5] 681 ohm Resistor (0.1% Precision, default Rset)**:
+   - Blue body (Precision)
+   - Marked `681R` or equivalent precision code.
+   - The default Rset for approximately 100 uA test current.
+3. **[BOM #4] 68.1 ohm Resistor (0.1% Precision, optional alternate Rset)**:
    - Blue body (Precision)
    - Color bands: **[Blue - Gray - Brown - Gold - Violet]** or marked `68R1`.
-   - The core component (Rset) generating the 1mA current.
-3. **[BOM #6] 100Ω Resistor (0.1% Precision, Shunt)**:
+   - Swap in when measuring lower-resistance samples that need approximately 1 mA test current.
+4. **[BOM #6] 100 ohm Resistor (0.1% Precision, Shunt)**:
    - Blue body (Precision)
    - Color bands: **[Brown - Black - Black - Black - Violet]** or marked `100R`.
    - The shunt resistor used to monitor the *actual* amount of current flowing.
@@ -244,7 +248,7 @@ Use the **bottom-right of the board (Cols a~e)** based on the master layout.
       ...
 (Row20) [LM_V+] ───Jumper───► (Row 7, VDD)  ← ⚠️ Row 3 is too crowded, pull from here!
 (Row21) [LM_R ] ─────────┐ 
-(Row22) [LM_V-] ───┐     │ (Rset 68.1Ω)
+(Row22) [LM_V-] ---+     | (Rset 681 ohm default)
                    │     │ 
 (Row23) [S_COM] ───┴─────┴ (100Ω Shunt)
 ```
@@ -257,12 +261,12 @@ Use the **bottom-right of the board (Cols a~e)** based on the master layout.
    - Pin 1 (V+) ➡️ Hole **20b**
    - Pin 2 (R)  ➡️ Hole **21b**
    - Pin 3 (V-) ➡️ Hole **22b**
-2. **Insert Rset Resistor (68.1Ω, #4)**:
-   - Leg 1 ➡️ Hole **21c**
-   - Leg 2 ➡️ Hole **22c**
-   > 💡 **Variable Measurement Range (Hot-Swap)**: Since you've already soldered a **[BOM #17] Female Header** into 21c and 22c, you can easily use tweezers to swap resistors (plug and play) according to the target material.
-   > - **With [BOM #4] 68.1Ω (approx. 1mA)**: Rec. Range **~10 kΩ/sq or lower**. (Low resistance like ITO films)
-   > - **With [BOM #5] 681Ω (approx. 100µA)**: Rec. Range **1 kΩ/sq ~ 100 kΩ/sq**. (High resistance like PEDOT:PSS)
+2. **Insert Rset Resistor (681 ohm, #5 by default)**:
+   - Leg 1 -> Hole **21c**
+   - Leg 2 -> Hole **22c**
+   > Note: Since you already installed a **[BOM #17] Female Header** into 21c and 22c, you can swap Rset values according to the target material.
+   > - **With [BOM #5] 681 ohm (approx. 100 uA, default)**: Rec. Range **1 kOhm/sq ~ 100 kOhm/sq**. (Higher resistance films)
+   > - **With [BOM #4] 68.1 ohm (approx. 1 mA)**: Rec. Range **~10 kOhm/sq or lower**. (Low resistance like ITO films)
    > *(This is a safe operating range calculated considering the ADC limit and the LM334's ~2.2V dropout voltage headroom.)*
 3. **Insert 100Ω Shunt (#6)**:
    - Leg 1 ➡️ Hole **22d**
@@ -290,7 +294,8 @@ Before powering on the Arduino, use a multimeter to check the solder joints!
 
 1. Set Multimeter to Ω (Resistance) mode.
 2. Touch the two probes to the silver solder joints of **Row 21** and **Row 22**.
-   - ➡️ Screen shows around **~68.1Ω** (67.5 ~ 68.5) = Success!
+   - With the default build, screen shows around **~681 ohm**.
+   - If you intentionally installed the low-resistance option, screen shows around **~68.1 ohm** (67.5 ~ 68.5).
 3. Now, probe **Row 22** and **Row 23**.
    - ➡️ Screen shows around **~100Ω** (99.5 ~ 100.5) = Success!
 
@@ -410,3 +415,4 @@ The 4 pins of a Signatone probe head (especially SP4 series) are arranged linear
 3. Twist the nut tightly clockwise to secure. If this connection is loose or flimsy, it is the #1 cause of wildly jumping resistance values.
 
 > 🎉 **Hardware and Wiring Assembly Complete!** Now prepare your sample, upload the code to your Arduino, and commence real-world measurements! You now possess a setup capable of the most ideal and highly precise electrical hardware measurements.
+

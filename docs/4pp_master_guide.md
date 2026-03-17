@@ -187,12 +187,16 @@ LM334 Operating Condition:
 ```
 
 **Software monitoring required**:
-- Calculate `I_actual = V_shunt / 100Ω` every cycle.
+- Calculate `I_actual = V_shunt / 100 ohm` every cycle.
 - Output warnings if current drops by **10% or more** against target.
 
-**Estimated Limits** (at 1mA):
+**Estimated operating guidance**:
+- `68.1 ohm Rset` (`~1 mA`): best for lower-resistance samples, but dropout starts sooner.
+- `681 ohm Rset` (`~100 uA`, default bring-up mode): safer for higher-resistance samples, but produces a smaller sense voltage on low-resistance films.
+
+**Estimated Limits (at 1mA)**:
 ```
-R_sample_max ≈ (3.3V - 0.1V_shunt - 0.9V_LM) / 1mA ≈ 2.3kΩ
+R_sample_max ~= (3.3V - 0.1V_shunt - 0.9V_LM) / 1mA ~= 2.3kOhm
 ```
 
 ### 2.6 Star Ground Topology
@@ -630,3 +634,4 @@ Smaller samples demand a Correction Factor (CF):
 ---
 
 > **Next Steps**: Having digested this master overview, proceed with the actual build by strictly following **`analog_wiring_guide.md`** and **`movement_implementation_guide.md`**.
+

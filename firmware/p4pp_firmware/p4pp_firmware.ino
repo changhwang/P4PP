@@ -44,6 +44,7 @@ const bool RELAY_REVERSE = HIGH;
 // Measurement Settings
 const int SETTLING_TIME_MS =
     100; // Wait time after switching relay before taking a reading
+const float MIN_VALID_CURRENT_MA = 0.005f; // Supports 681-ohm (~100 uA) mode
 const long HOMING_MAX_STEPS = 30000;
 const int LIN_HOME_CLEAR_STEPS = 800;         // After first switch hit
 const int LIN_HOME_FINAL_BACKOFF_STEPS = 250; // After second switch hit
@@ -494,7 +495,8 @@ void executeMeasurement() {
   Serial.println(F(" mV"));
 
   float delta_v_mV = (v_fwd_mV - v_rev_mV) / 2.0;
-  float test_i_mA = (i_fwd_mA + i_rev_mA) / 2.0;
+  // Relay reversal flips shunt polarity, so average current magnitudes.
+  float test_i_mA = (fabs(i_fwd_mA) + fabs(i_rev_mA)) / 2.0;
 
   Serial.println(F("- - - - - - - - - - - - "));
   Serial.print(F("Delta_V: "));
@@ -504,7 +506,7 @@ void executeMeasurement() {
   Serial.print(test_i_mA, 4);
   Serial.println(F(" mA"));
 
-  if (abs(test_i_mA) > 0.1) {
+  if (fabs(test_i_mA) > MIN_VALID_CURRENT_MA) {
     float r_sheet = 4.532 * (delta_v_mV / test_i_mA);
     Serial.print(F("Raw R_sheet: "));
     Serial.print(r_sheet, 4);
@@ -554,10 +556,11 @@ void executeMeasurementMulti(int cycles) {
     float v_rev = (((voltage_rev * 2.048) / 8388608.0) / 4.0) * 1000.0;
 
     float delta_v = (v_fwd - v_rev) / 2.0;
-    float test_i = (i_fwd + i_rev) / 2.0;
+    // Relay reversal flips shunt polarity, so average current magnitudes.
+    float test_i = (fabs(i_fwd) + fabs(i_rev)) / 2.0;
 
     float rs = 0.0;
-    if (abs(test_i) > 0.001) {
+    if (fabs(test_i) > MIN_VALID_CURRENT_MA) {
       rs = 4.532 * (delta_v / test_i);
     }
     rs_values[c] = rs;
@@ -651,7 +654,8 @@ void executeMeasurementDebug(int samples) {
       (((voltage_rev * 2.048) / 8388608.0) / 4.0) * 1000.0; // Gain = 4
 
   float delta_v_mV = (v_fwd_mV - v_rev_mV) / 2.0;
-  float test_i_mA = (i_fwd_mA + i_rev_mA) / 2.0;
+  // Relay reversal flips shunt polarity, so average current magnitudes.
+  float test_i_mA = (fabs(i_fwd_mA) + fabs(i_rev_mA)) / 2.0;
 
   Serial.print(F("DBG I_fwd(mA): "));
   Serial.println(i_fwd_mA, 6);
@@ -666,12 +670,14 @@ void executeMeasurementDebug(int samples) {
   Serial.print(F("DBG Test_I(mA): "));
   Serial.println(test_i_mA, 6);
 
-  if (abs(test_i_mA) > 0.1) {
+  if (fabs(test_i_mA) > MIN_VALID_CURRENT_MA) {
     float r_sheet = 4.532 * (delta_v_mV / test_i_mA);
     Serial.print(F("DBG Raw R_sheet: "));
     Serial.println(r_sheet, 6);
   } else {
-    Serial.println(F("DBG Raw R_sheet: skipped (|I| <= 0.1mA)"));
+    Serial.print(F("DBG Raw R_sheet: skipped (|I| <= "));
+    Serial.print(MIN_VALID_CURRENT_MA, 3);
+    Serial.println(F("mA)"));
   }
 
   Serial.println(F("OK MEASURE_DBG"));

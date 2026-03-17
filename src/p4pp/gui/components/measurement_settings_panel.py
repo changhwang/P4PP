@@ -3,9 +3,17 @@ import math
 import customtkinter as ctk
 
 _CIRCULAR_TABLE = [
-    (1.0, 0.0000), (1.5, 0.3468), (2.0, 0.4892), (3.0, 0.6462),
-    (4.0, 0.7725), (5.0, 0.8408), (7.5, 0.9204), (10.0, 0.9510),
-    (20.0, 0.9876), (40.0, 0.9945), (100.0, 0.9991),
+    (1.0, 0.0000),
+    (1.5, 0.3468),
+    (2.0, 0.4892),
+    (3.0, 0.6462),
+    (4.0, 0.7725),
+    (5.0, 0.8408),
+    (7.5, 0.9204),
+    (10.0, 0.9510),
+    (20.0, 0.9876),
+    (40.0, 0.9945),
+    (100.0, 0.9991),
 ]
 _RECT_AS_VALS = [1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 40.0]
 _RECT_TABLE = {
@@ -17,7 +25,6 @@ _RECT_TABLE = {
     10.0: [0.6832, 0.7192, 0.7196, 0.7197],
     40.0: [0.6931, 0.6931, 0.6931, 0.6931],
 }
-PI_LN2 = math.pi / math.log(2)
 
 
 def _lerp(x, x0, x1, y0, y1):
@@ -72,13 +79,21 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
         res_frame.grid(row=1, column=0, padx=20, pady=4, sticky="ew")
         res_frame.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(res_frame, text="R_set:").grid(row=0, column=0, sticky="w")
-        self.resistor_var = ctk.StringVar(value="68.1 Ω")
+        self.resistor_var = ctk.StringVar(value="681 ohm")
         self.combo_resistor = ctk.CTkComboBox(
-            res_frame, values=["68.1 Ω", "681 Ω"], variable=self.resistor_var,
-            command=self._on_resistor_changed, state="readonly", width=100,
+            res_frame,
+            values=["681 ohm", "68.1 ohm"],
+            variable=self.resistor_var,
+            command=self._on_resistor_changed,
+            state="readonly",
+            width=100,
         )
         self.combo_resistor.grid(row=0, column=1, sticky="e")
-        self.lbl_range = ctk.CTkLabel(self, text="Range: <= 10 kOhm/sq  (I ~= 1 mA)", font=ctk.CTkFont(size=11))
+        self.lbl_range = ctk.CTkLabel(
+            self,
+            text="Range: 1 kOhm/sq - 100 kOhm/sq  (I ~= 0.1 mA)",
+            font=ctk.CTkFont(size=11),
+        )
         self.lbl_range.grid(row=2, column=0, padx=20, pady=(0, 4), sticky="w")
 
         cyc_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -215,8 +230,8 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
 
     def get_resistor_info(self) -> dict:
         if "68.1" in self.resistor_var.get():
-            return {"R_set": 68.1, "label": "68.1 Ω", "range": "<= 10 kOhm/sq"}
-        return {"R_set": 681, "label": "681 Ω", "range": "1 kOhm/sq - 100 kOhm/sq"}
+            return {"R_set": 68.1, "label": "68.1 ohm", "range": "<= 10 kOhm/sq"}
+        return {"R_set": 681, "label": "681 ohm", "range": "1 kOhm/sq - 100 kOhm/sq"}
 
     def get_correction_factor(self) -> float:
         shape = self.shape_var.get()
@@ -237,8 +252,7 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
                 return 1.0
             if diameter <= 0:
                 return 1.0
-            raw_factor = correction_factor_circular(diameter / spacing)
-            return (raw_factor * PI_LN2) / PI_LN2
+            return correction_factor_circular(diameter / spacing)
 
         try:
             width = float(self.dim1_var.get())
@@ -248,4 +262,4 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
         if width <= 0 or length <= 0:
             return 1.0
         raw_factor = correction_factor_rectangular(width / spacing, length / width)
-        return raw_factor / (math.log(2) / math.pi)
+        return raw_factor / math.log(2)
