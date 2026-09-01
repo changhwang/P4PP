@@ -148,7 +148,8 @@ This is the **most effective method** for canceling Thermal EMF and ADC offsets:
 1. Inject Forward Curr → (Wait for settle) → Measure V_fwd
 2. Swap Curr Dir via Relay → (Wait for settle) → Measure V_rev
 3. V_corrected = (V_fwd - V_rev) / 2
-4. Rs = Correction_Factor × (V_corrected / I_actual)
+4. Firmware: Rs∞ = (π / ln 2) × (V_corrected / I_actual)
+5. Host GUI: Rs = F × Rs∞
 ```
 
 > [!TIP]
@@ -528,11 +529,8 @@ Measurement measureWithReversal() {
   
   m.R_sample = m.V_corrected / m.I_actual;
   
-  // Geometric Correction Factor F
-  // Based on NBS Standard for 1-inch target centered.
-  float F_GEOM = 4.47044;  
-  
-  m.Rs = F_GEOM * m.R_sample;  // Sheet Resistance
+  // Report the infinite-sheet value. The host GUI applies finite-sample F.
+  m.Rs = (PI / log(2.0)) * m.R_sample;
   
   // 4. Return relay to default
   digitalWrite(RELAY_PIN, LOW);
@@ -563,13 +561,23 @@ Measurement measureWithReversal() {
 ### 9.1 Basic Math
 
 ```
-Resistance:
-  R_sample = V_sense / I_actual
+Current-reversal voltage:
+  ΔV = (V_fwd - V_rev) / 2
 
-Sheet Resistance (Infinite Sheet Approx):
-  Rs = (π / ln2) × R_sample
-     = 4.532 × R_sample  [Ω/□]
+Measured resistance ratio:
+  R = ΔV / I
 ```
+
+The firmware reports the infinite-sheet value
+
+`Rs∞ = (π / ln 2) · (ΔV / I) = 4.532 · (ΔV / I)`.
+
+The host GUI applies the finite-sample correction:
+
+`Rs = F · Rs∞`,
+
+where `F` is the Smits geometric factor (`F = 0.9812` for the 20 × 20 mm,
+`s = 1.016 mm` configuration).
 
 ### 9.2 Current Reversal Correction (Delta Mode)
 
@@ -582,23 +590,21 @@ Benefits:
   - Compensates for contact asymmetry
 ```
 
-### 9.3 Sample Size Correction Factor (CF)
+### 9.3 Finite-Sample Geometric Factor
 
 > [!WARNING]
-> **Important**: The `4.532` multiplier is ONLY valid **when sample size > 40x the probe spacing**.
+> The infinite-sheet value `Rs∞` is not the final result for a finite sample.
+> Apply the geometric factor exactly once in the host GUI.
 
 ```
 Probe Spacing: s = 40 mil = 1.016 mm
-Minimum sample radius: 40 × 1.016 mm ≈ 40 mm
-
-Smaller samples demand a Correction Factor (CF):
-  Rs = CF × (π / ln2) × (V / I)
+Square sample: d = 20 mm
+d/s = 20 / 1.016 ≈ 19.685
+Smits factor: F ≈ 0.9812
 ```
 
-**NBS/NIST TN 199 Standard (Circular, centered)**:
-- 1-inch sample / 40mil probe spacing (d/s ≈ 25)
-- **F = 4.47044** (CF ≈ 0.986)
-- This guide fixes this value in code. Adjust if using differently sized samples.
+The firmware's `4.532` multiplier already converts `ΔV/I` to `Rs∞`. The GUI then
+multiplies that reported value by `F`; it does not apply `π/ln 2` again.
 
 ---
 

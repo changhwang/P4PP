@@ -153,5 +153,8 @@ Output:
 
 ## License
 
-Internal R&D project unless otherwise specified.
-Validate safety and calibration before production usage.
+P4PP is released under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Changhyun Hwang, Diao Research Group, University of Illinois at Urbana-Champaign.
+
+Validate safety and calibration before production use.

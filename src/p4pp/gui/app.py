@@ -413,6 +413,12 @@ class P4PPApp(ctk.CTk):
         shape = self.meas_settings.shape_var.get()
         spacing = self.meas_settings.spacing_var.get()
         corr_factor = self.meas_settings.get_correction_factor()
+        correction_note = self.meas_settings.get_correction_note()
+        factor_label = (
+            "Smits Geometric Factor F"
+            if shape == "Rectangular"
+            else "Geometric Factor F"
+        )
         resistor_info = self.meas_settings.get_resistor_info()
 
         dim_info = ""
@@ -432,14 +438,15 @@ class P4PPApp(ctk.CTk):
             writer.writerow(["Position", f"LIN={lin_mm:.2f}mm  ROT={rot_deg:.1f}deg"])
             writer.writerow([])
             writer.writerow(["Measurement Settings"])
-            writer.writerow(["Current Source R_set", resistor_info["label"]])
-            writer.writerow(["Measurement Range", resistor_info["range"]])
-            writer.writerow(["Cycles (N)", cycles])
-            writer.writerow(["Probe Spacing (mm)", spacing])
-            writer.writerow(["Sample Shape", shape])
+            writer.writerow(["Setting", "Value", "Notes"])
+            writer.writerow(["Current Source R_set", resistor_info["label"], ""])
+            writer.writerow(["Measurement Range", resistor_info["range"], ""])
+            writer.writerow(["Cycles (N)", cycles, ""])
+            writer.writerow(["Probe Spacing (mm)", spacing, ""])
+            writer.writerow(["Sample Shape", shape, ""])
             if dim_info:
-                writer.writerow(["Dimensions", dim_info])
-            writer.writerow(["Correction Factor", f"{corr_factor:.6f}"])
+                writer.writerow(["Dimensions", dim_info, ""])
+            writer.writerow([factor_label, f"{corr_factor:.6f}", correction_note])
             writer.writerow([])
             writer.writerow(["Cycle Data"])
             writer.writerow(["Cycle", "Raw Rs (Ohm/sq)"])
@@ -452,15 +459,22 @@ class P4PPApp(ctk.CTk):
                 writer.writerow([1, f"{raw:.6f}" if raw else "N/A"])
             writer.writerow([])
             writer.writerow(["Summary"])
+            writer.writerow(["Metric", "Value", "Notes"])
             raw_mean = self.controller.latest_raw_result
             corrected = self.controller.latest_result
             std = self.controller.latest_std
             n = len(cycle_data) if cycle_data else 1
-            writer.writerow(["N", n])
-            writer.writerow(["Raw Rs Mean (Ohm/sq)", f"{raw_mean:.6f}" if raw_mean else "N/A"])
-            writer.writerow(["Std Dev (Ohm/sq)", f"{std:.6f}" if std else "0.000000"])
-            writer.writerow(["Correction Factor", f"{corr_factor:.6f}"])
-            writer.writerow(["Corrected Rs (Ohm/sq)", f"{corrected:.6f}" if corrected else "N/A"])
+            writer.writerow(["N", n, ""])
+            writer.writerow(
+                ["Raw Rs Mean (Ohm/sq)", f"{raw_mean:.6f}" if raw_mean else "N/A", ""]
+            )
+            writer.writerow(
+                ["Std Dev (Ohm/sq)", f"{std:.6f}" if std else "0.000000", ""]
+            )
+            writer.writerow([factor_label, f"{corr_factor:.6f}", correction_note])
+            writer.writerow(
+                ["Corrected Rs (Ohm/sq)", f"{corrected:.6f}" if corrected else "N/A", ""]
+            )
 
         logger.info("Measurement saved: %s", filepath)
 

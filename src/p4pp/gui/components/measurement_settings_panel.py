@@ -1,5 +1,3 @@
-import math
-
 import customtkinter as ctk
 
 _CIRCULAR_TABLE = [
@@ -15,16 +13,16 @@ _CIRCULAR_TABLE = [
     (40.0, 0.9945),
     (100.0, 0.9991),
 ]
-_RECT_AS_VALS = [1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 40.0]
-_RECT_TABLE = {
-    1.0: [0.2492, 0.3185, 0.3232, 0.3246],
-    1.5: [0.4036, 0.5039, 0.5083, 0.5098],
-    2.0: [0.4893, 0.5932, 0.5978, 0.5994],
-    3.0: [0.5708, 0.6554, 0.6586, 0.6594],
-    5.0: [0.6378, 0.6988, 0.7004, 0.7008],
-    10.0: [0.6832, 0.7192, 0.7196, 0.7197],
-    40.0: [0.6931, 0.6931, 0.6931, 0.6931],
-}
+_SMITS_SQUARE_TABLE = [
+    (3.0, 0.5419),
+    (4.0, 0.6869),
+    (5.0, 0.7744),
+    (7.5, 0.8845),
+    (10.0, 0.9313),
+    (15.0, 0.9681),
+    (20.0, 0.9818),
+    (40.0, 0.9954),
+]
 
 
 def _lerp(x, x0, x1, y0, y1):
@@ -44,24 +42,89 @@ def correction_factor_circular(d_over_s: float) -> float:
     return 1.0
 
 
-def correction_factor_rectangular(a_over_s: float, d_over_a: float) -> float:
-    if d_over_a >= 4:
-        col = 3
-    elif d_over_a >= 3:
-        col = 2
-    elif d_over_a >= 2:
-        col = 1
-    else:
-        col = 0
+def _natural_cubic_second_derivatives(points):
+    """Return second derivatives for a natural cubic spline table."""
+    x_values = [point[0] for point in points]
+    y_values = [point[1] for point in points]
+    intervals = [x_values[i + 1] - x_values[i] for i in range(len(points) - 1)]
+    secants = [
+        (y_values[i + 1] - y_values[i]) / intervals[i]
+        for i in range(len(points) - 1)
+    ]
+    interior_count = len(points) - 2
+    lower = [0.0] * interior_count
+    diagonal = [0.0] * interior_count
+    upper = [0.0] * interior_count
+    rhs = [0.0] * interior_count
 
-    if a_over_s <= _RECT_AS_VALS[0]:
-        return _RECT_TABLE[_RECT_AS_VALS[0]][col]
-    for i in range(1, len(_RECT_AS_VALS)):
-        if a_over_s <= _RECT_AS_VALS[i]:
-            y0 = _RECT_TABLE[_RECT_AS_VALS[i - 1]][col]
-            y1 = _RECT_TABLE[_RECT_AS_VALS[i]][col]
-            return _lerp(a_over_s, _RECT_AS_VALS[i - 1], _RECT_AS_VALS[i], y0, y1)
-    return _RECT_TABLE[_RECT_AS_VALS[-1]][col]
+    for row in range(interior_count):
+        i = row + 1
+        lower[row] = intervals[i - 1] if row > 0 else 0.0
+        diagonal[row] = 2 * (intervals[i - 1] + intervals[i])
+        upper[row] = intervals[i] if row < interior_count - 1 else 0.0
+        rhs[row] = 6 * (secants[i] - secants[i - 1])
+
+    for row in range(1, interior_count):
+        multiplier = lower[row] / diagonal[row - 1]
+        diagonal[row] -= multiplier * upper[row - 1]
+        rhs[row] -= multiplier * rhs[row - 1]
+
+    second_derivatives = [0.0] * len(points)
+    second_derivatives[-2] = rhs[-1] / diagonal[-1]
+    for row in range(interior_count - 2, -1, -1):
+        second_derivatives[row + 1] = (
+            rhs[row] - upper[row] * second_derivatives[row + 2]
+        ) / diagonal[row]
+    return second_derivatives
+
+
+_SMITS_SQUARE_SECOND_DERIVATIVES = _natural_cubic_second_derivatives(
+    _SMITS_SQUARE_TABLE
+)
+
+
+def correction_factor_square(d_over_s: float) -> float:
+    """Smits finite-size factor F for centered probes on a square sample."""
+    if d_over_s <= _SMITS_SQUARE_TABLE[0][0]:
+        return _SMITS_SQUARE_TABLE[0][1]
+    if d_over_s > _SMITS_SQUARE_TABLE[-1][0]:
+        last_ratio, last_factor = _SMITS_SQUARE_TABLE[-1]
+        return 1.0 - (1.0 - last_factor) * last_ratio / d_over_s
+
+    for i in range(1, len(_SMITS_SQUARE_TABLE)):
+        x1, y1 = _SMITS_SQUARE_TABLE[i]
+        if d_over_s <= x1:
+            x0, y0 = _SMITS_SQUARE_TABLE[i - 1]
+            interval = x1 - x0
+            weight_0 = (x1 - d_over_s) / interval
+            weight_1 = (d_over_s - x0) / interval
+            return (
+                weight_0 * y0
+                + weight_1 * y1
+                + (
+                    (weight_0**3 - weight_0)
+                    * _SMITS_SQUARE_SECOND_DERIVATIVES[i - 1]
+                    + (weight_1**3 - weight_1)
+                    * _SMITS_SQUARE_SECOND_DERIVATIVES[i]
+                )
+                * interval**2
+                / 6
+            )
+
+    return 1.0
+
+
+def correction_factor_rectangular(d_over_s: float, aspect_ratio: float = 1.0) -> float:
+    """Compatibility wrapper using the verified Smits square-sample table."""
+    del aspect_ratio
+    return correction_factor_square(d_over_s)
+
+
+def correction_factor(width_mm: float, length_mm: float, spacing_mm: float) -> float:
+    """Return F using the shorter sample side as the square-table dimension d."""
+    if width_mm <= 0 or length_mm <= 0 or spacing_mm <= 0:
+        raise ValueError("Sample dimensions and probe spacing must be positive")
+    return correction_factor_square(min(width_mm, length_mm) / spacing_mm)
 
 
 class MeasurementSettingsPanel(ctk.CTkFrame):
@@ -208,7 +271,14 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
         elif shape == "Circular":
             text = f"Correction: {factor:.4f} (circular)"
         else:
-            text = f"Correction: {factor:.4f} (rectangular)"
+            try:
+                spacing = float(self.spacing_var.get())
+                width = float(self.dim1_var.get())
+                length = float(self.dim2_var.get())
+                d_over_s = min(width, length) / spacing
+                text = f"Smits F: {factor:.4f} (d/s={d_over_s:.3f})"
+            except (ValueError, ZeroDivisionError):
+                text = f"Smits F: {factor:.4f} (square table)"
         self.lbl_factor.configure(text=text)
 
         if self.on_settings_changed:
@@ -261,5 +331,43 @@ class MeasurementSettingsPanel(ctk.CTkFrame):
             return 1.0
         if width <= 0 or length <= 0:
             return 1.0
-        raw_factor = correction_factor_rectangular(width / spacing, length / width)
-        return raw_factor / math.log(2)
+        return correction_factor(width, length, spacing)
+
+    def get_correction_note(self) -> str:
+        shape = self.shape_var.get()
+        factor = self.get_correction_factor()
+        if shape == "Infinite Sheet":
+            return "Firmware infinite-sheet value retained; F=1.000000"
+
+        try:
+            spacing = float(self.spacing_var.get())
+        except ValueError:
+            return "Invalid probe spacing; F defaults to 1"
+        if spacing <= 0:
+            return "Invalid probe spacing; F defaults to 1"
+
+        if shape == "Circular":
+            try:
+                diameter = float(self.dim1_var.get())
+            except ValueError:
+                return "Invalid diameter; F defaults to 1"
+            return (
+                f"Centered circular-sample correction; F={factor:.6f}; "
+                f"diameter/s={diameter / spacing:.6f}"
+            )
+
+        try:
+            width = float(self.dim1_var.get())
+            length = float(self.dim2_var.get())
+        except ValueError:
+            return "Invalid sample dimensions; F defaults to 1"
+        d_over_s = min(width, length) / spacing
+        if abs(width - length) <= 1e-9:
+            return (
+                f"Smits finite-square correction (natural cubic spline); F={factor:.6f}; "
+                f"d/s={d_over_s:.6f}"
+            )
+        return (
+            "Smits square-table approximation using shorter side; "
+            f"F={factor:.6f}; d/s={d_over_s:.6f}"
+        )
