@@ -194,6 +194,19 @@ class P4PPApp(ctk.CTk):
 
         self.set_theme(LIGHT_MODE)
 
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def on_closing(self):
+        # Always release the COM port before the process dies; otherwise Windows
+        # can keep COM19 locked / force Nano 33 IoT USB re-enumeration.
+        if self.controller is not None:
+            try:
+                self.controller.disconnect()
+            except Exception as e:
+                logger.error("Error disconnecting on exit: %s", e)
+            self.controller = None
+        self.destroy()
+
     def cmd_connect(self):
         port_choice = self.port_var.get()
         if self.controller and self.controller.state != State.DISCONNECTED:
@@ -214,11 +227,25 @@ class P4PPApp(ctk.CTk):
             self.status_panel.update_subsystems(self.controller)
             self.status_panel.update_position(self.controller.pos_lin, self.controller.pos_rot)
             self.serial_log_panel.clear()
-            self.serial_log_panel.append_lines(["[APP] Connected."])
+            self.serial_log_panel.append_lines([f"[APP] Connected to {port_choice}."])
             self.last_result_displayed = self.controller.latest_result
             self.last_state = self.controller.state
             self.after(100, self.poll_hardware)
         else:
+            err = getattr(self.controller.hw, "last_error", None) or "unknown error"
+            self.serial_log_panel.append_lines(
+                [
+                    f"[APP] Connect failed: {port_choice}",
+                    f"[APP] {err}",
+                    "[APP] Tip: close other Serial Monitors / duplicate P4PP windows, "
+                    "unplug-replug USB, then Refresh and retry.",
+                ]
+            )
+            try:
+                self.controller.disconnect()
+            except Exception:
+                pass
+            self.controller = None
             self.status_panel.update_subsystems(None)
 
     def cmd_initialize(self):
