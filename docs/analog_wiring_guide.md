@@ -355,7 +355,7 @@ Finally, we bind the now-safe voltages from the diode zone (Rows 25~31) and pipe
 This is a 12V Relay switching circuit designed to swap the direction of the 1mA constant current source back and forth (Reversal) into the sample's I+ and I- terminals. We utilize a **PN2222A Transistor** so the weak 3.3V digital signal from the Arduino can reliably flick the beefy 12V relay on and off.
 
 ### 6.0 Prep List
-1. **[BOM #7] DPDT Relay (12V)** (Panasonic TX2-12V / 255-1002-5-ND)
+1. **[BOM #7] DPDT Relay (12V)** (Panasonic TQ2-12V / 255-1002-5-ND)
 2. **[BOM #8] PN2222A Transistor** (NPN, TO-92 Package)
 3. **[BOM #9] 1N4148 Diode** (Glass tube type, Black stripe is Cathode)
 4. **[BOM #10] 1kΩ Resistor x 2** (Base protection and pull-down)
